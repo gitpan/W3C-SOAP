@@ -1,0 +1,10 @@
+[%
+    config = {
+        xsd  => {
+        },
+        wsdl => {
+            parent_module => 'W3C::SOAP::WSDL',
+        },
+        alias => 0,
+    };
+-%]
