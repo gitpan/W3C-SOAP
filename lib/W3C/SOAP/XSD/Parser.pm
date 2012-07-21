@@ -18,11 +18,14 @@ use Path::Class;
 use W3C::SOAP::XSD::Document;
 use File::ShareDir qw/dist_dir/;
 use Moose::Util::TypeConstraints;
+use W3C::SOAP::Utils qw/split_ns/;
+use W3C::SOAP::XSD;
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw/load_xsd/;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+Moose::Exporter->setup_import_methods(
+    as_is => ['load_xsd'],
+);
+
+our $VERSION     = version->new('0.0.2');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -118,6 +121,13 @@ sub write_modules {
             for my $el (@{ $type->sequence }) {
                 $modules{ $el->type_module }++
                     if ! $el->simple_type && $el->module ne $module
+            }
+            for my $element (@{ $type->sequence }) {
+                next if $element->simple_type;
+                my ($ns) = split_ns($element->type);
+                my $ns_uri = $element->document->get_ns_uri($ns);
+                $modules{ $type->document->get_module_base($ns_uri) }++
+                    if $ns_uri && $ns_uri ne $type->document->target_namespace;
             }
 
             # write the complex type module
@@ -306,7 +316,7 @@ sub simple_type_package {
 
         # Add coercion from XML::LibXML nodes
         coerce $subtype->moose_type =>
-            from 'xml_node' =>
+            from 'XML::LibXML::Node' =>
             via { $_->textContent };
     }
 
@@ -421,7 +431,7 @@ W3C::SOAP::XSD::Parser - Parse an W3C::SOAP::XSD::Document and create perl modul
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.1.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.0.2.
 
 =head1 SYNOPSIS
 

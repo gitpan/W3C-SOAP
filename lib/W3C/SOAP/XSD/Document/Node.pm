@@ -12,10 +12,7 @@ use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+our $VERSION     = version->new('0.0.2');
 
 has '+parent_node' => (
     isa    => 'Maybe[W3C::SOAP::XSD::Document::Node]',
@@ -31,7 +28,7 @@ W3C::SOAP::XSD::Document::Node - <One-line description of module's purpose>
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Node version 0.1.
+This documentation refers to W3C::SOAP::XSD::Document::Node version 0.0.2.
 
 
 =head1 SYNOPSIS

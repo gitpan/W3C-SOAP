@@ -24,10 +24,7 @@ use W3C::SOAP::WSDL::Document::Service;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+our $VERSION     = version->new('0.0.2');
 
 has messages => (
     is         => 'rw',
@@ -78,6 +75,20 @@ has service => (
     is         => 'rw',
     isa        => 'HashRef[W3C::SOAP::WSDL::Document::Service]',
     builder    => '_service',
+    lazy_build => 1,
+    weak_ref   => 1,
+);
+has policies => (
+    is         => 'rw',
+    isa        => 'ArrayRef[W3C::SOAP::WSDL::Document::Policy]',
+    builder    => '_policies',
+    lazy_build => 1,
+    weak_ref   => 1,
+);
+has policy => (
+    is         => 'rw',
+    isa        => 'HashRef[W3C::SOAP::WSDL::Document::Policy]',
+    builder    => '_policy',
     lazy_build => 1,
     weak_ref   => 1,
 );
@@ -200,6 +211,31 @@ sub _service {
     return \%service;
 }
 
+sub _policies {
+    my ($self) = @_;
+    my @complex_types;
+    my @nodes = $self->xpc->findnodes('/*/wsp:Policy');
+
+    for my $node (@nodes) {
+        push @complex_types, W3C::SOAP::WSDL::Document::Policy->new(
+            document => $self,
+            node     => $node,
+        );
+    }
+
+    return \@complex_types;
+}
+
+sub _policy {
+    my ($self) = @_;
+    my %service;
+    for my $service ( @{ $self->service }) {
+        $service{$service->sec_id} = $service;
+    }
+
+    return \%service;
+}
+
 sub _schemas {
     my ($self) = @_;
     my @complex_types;
@@ -258,7 +294,7 @@ W3C::SOAP::WSDL::Document - Object to represent a WSDL Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document version 0.1.
+This documentation refers to W3C::SOAP::WSDL::Document version 0.0.2.
 
 =head1 SYNOPSIS
 

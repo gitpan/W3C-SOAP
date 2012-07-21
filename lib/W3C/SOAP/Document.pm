@@ -15,9 +15,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
+our $VERSION     = version->new('0.0.2');
 
 has string => (
     is         => 'rw',
@@ -71,6 +69,7 @@ sub _xpc {
     $xpc->registerNs(xsd  => 'http://www.w3.org/2001/XMLSchema');
     $xpc->registerNs(wsdl => 'http://schemas.xmlsoap.org/wsdl/');
     $xpc->registerNs(wsp  => 'http://schemas.xmlsoap.org/ws/2004/09/policy');
+    $xpc->registerNs(wssp => 'http://www.bea.com/wls90/security/policy');
     $xpc->registerNs(soap => 'http://schemas.xmlsoap.org/wsdl/soap/');
 
     return $xpc;
@@ -95,7 +94,7 @@ W3C::SOAP::Document - Object to represent an XML Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document version 0.1.
+This documentation refers to W3C::SOAP::Document version 0.0.2.
 
 =head1 SYNOPSIS
 

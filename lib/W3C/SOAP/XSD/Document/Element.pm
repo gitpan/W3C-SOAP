@@ -14,14 +14,11 @@ use List::Util;
 #use List::MoreUtils;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
-use W3C::SOAP::Utils qw/split_ns/;
+use W3C::SOAP::Utils qw/split_ns xml_error/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+our $VERSION     = version->new('0.0.2');
 
 has complex_type => (
     is     => 'rw',
@@ -81,6 +78,26 @@ sub _type {
     my $type = $self->node->getAttribute('type');
     return $type if $type;
 
+    my $simple = $self->document->simple_type;
+    TYPE:
+    for my $type (keys %{$simple}) {
+        my $node = $simple->{$type}->node;
+        my  $type_name = $node->parentNode->getAttribute('name');
+        if ( $type_name && $type_name eq $self->name ) {
+            my @children = $node->findnodes('xs:restriction', $node);
+            last if @children != 1;
+
+            my $child = $children[0]->firstChild;
+            while ($child) {
+                last TYPE if $child->nodeName !~ /^#/;
+                $child = $child->nextSibling;
+            }
+
+            return $children[0]->getAttribute('base');
+        }
+        $type_name ||= '';
+    }
+
     return $self->has_anonymous;
 }
 
@@ -117,10 +134,8 @@ sub _nillble {
 
 sub module {
     my ($self) = @_;
-    my ($ns, $type) = split_ns($self->type);
-    my $ns_uri = $self->document->get_ns_uri($ns);
 
-    return $self->document->get_module_base( $ns_uri );
+    return $self->document->get_module_base( $self->document->target_namespace );
 }
 
 sub type_module {
@@ -136,7 +151,7 @@ sub simple_type {
     $self->document->simple_type;
     my ($ns, $type) = split_ns($self->type);
     my $ns_uri = $self->document->get_ns_uri($ns);
-    warn "Simple type missing a type for '".$self->type."'\n".$self->node->toString."\n"
+    warn "Simple type missing a type for '".$self->type."'\n".xml_error($self->node)."\n"
         if !$ns && $ns_uri ne 'http://www.w3.org/2001/XMLSchema';
 
     return "xs:$type" if $ns_uri eq 'http://www.w3.org/2001/XMLSchema';
@@ -161,7 +176,7 @@ sub very_simple_type {
     $self->document->simple_type;
     my ($ns, $type) = split_ns($self->type);
     my $ns_uri = $self->document->get_ns_uri($ns);
-    warn "Simple type missing a type for '".$self->type."'\n".$self->node->toString."\n"
+    warn "Simple type missing a type for '".$self->type."'\n".xml_error($self->node)."\n"
         if !$ns && $ns_uri ne 'http://www.w3.org/2001/XMLSchema';
 
     return "xs:$type" if $ns_uri eq 'http://www.w3.org/2001/XMLSchema';
@@ -184,7 +199,7 @@ sub moosex_type {
     my ($self) = @_;
     my ($ns, $type) = split_ns($self->type);
     my $ns_uri = $self->document->get_ns_uri($ns);
-    warn "Simple type missing a type for '".$self->type."'\n".$self->node->toString."\n"
+    warn "Simple type missing a type for '".$self->type."'\n".xml_error($self->node)."\n"
         if !$ns && $ns_uri ne 'http://www.w3.org/2001/XMLSchema';
 
     return "'xs:$type'" if $ns_uri eq 'http://www.w3.org/2001/XMLSchema';
@@ -241,7 +256,7 @@ W3C::SOAP::XSD::Document::Element - XML Schema Element
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Element version 0.1.
+This documentation refers to W3C::SOAP::XSD::Document::Element version 0.0.2.
 
 
 =head1 SYNOPSIS

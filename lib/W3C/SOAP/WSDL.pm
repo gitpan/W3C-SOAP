@@ -17,12 +17,51 @@ use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Client';
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+our $VERSION     = version->new('0.0.2');
 
+sub _request {
+    my ($self, $action, @args) = @_;
+    my $meta       = $self->meta;
+    my $method     = $self->_get_operation_method($action);
+    my $opperation = $method->wsdl_opperation;
+    my $resp;
 
+    if ( $method->has_in_class && $method->has_in_attribute ) {
+        my $class = $method->in_class;
+        my $att   = $method->in_attribute;
+        my $xsd   = $class->new(
+            $att => @args == 1 ? $args[0] : {@args},
+        );
+        $resp = $self->request( $opperation => $xsd );
+    }
+    else {
+        $resp = $self->request( $opperation, @args );
+    }
+
+    if ( $method->has_out_class && $method->has_out_attribute ) {
+        my $class = $method->out_class;
+        my $att   = $method->out_attribute;
+        return $class->new($resp)->$att;
+    }
+    else {
+        return $resp;
+    }
+}
+
+sub _get_operation_method {
+    my ($self, $action) = @_;
+
+    my $method = $self->meta->get_method($action);
+    return $method if $method && $method->meta->name eq 'W3C::SOAP::WSDL::Meta::Method';
+
+    for my $super ( $self->meta->superclasses ) {
+        next unless $super->can('_get_operation_method');
+        $method = $super->_get_operation_method($action);
+        return $method if $method && $method->meta->name eq 'W3C::SOAP::WSDL::Meta::Method';
+    }
+
+    confess "Could not find any methods called $action!";
+}
 
 1;
 
@@ -34,7 +73,7 @@ W3C::SOAP::WSDL - A SOAP WSDL Client object
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL version 0.1.
+This documentation refers to W3C::SOAP::WSDL version 0.0.2.
 
 
 =head1 SYNOPSIS

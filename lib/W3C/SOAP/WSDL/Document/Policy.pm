@@ -1,6 +1,6 @@
-package W3C::SOAP::WSDL::Document::InOutPuts;
+package W3C::SOAP::WSDL::Document::Policy;
 
-# Created on: 2012-05-28 07:30:02
+# Created on: 2012-07-18 11:11:32
 # Create by:  Ivan Wills
 # $Id$
 # $Revision$, $HeadURL$, $Date$
@@ -14,39 +14,33 @@ use List::Util;
 #use List::MoreUtils;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
-use W3C::SOAP::Utils qw/split_ns/;
+
 extends 'W3C::SOAP::Document::Node';
 
 our $VERSION     = version->new('0.0.2');
 
-has message => (
-    is         => 'rw',
-    isa        => 'Maybe[W3C::SOAP::WSDL::Document::Message]',
-    builder    => '_message',
-    lazy_build => 1,
+has sec_id => (
+    is      => 'rw',
+    isa     => 'Str',
+    builder => '_sec_id',
 );
-has policy => (
-    is         => 'rw',
-    isa        => 'Maybe[Str]',
-    builder    => '_policy',
-    lazy_build => 1,
-);
-has body => (
-    is         => 'rw',
-    isa        => 'Maybe[Str]',
-    builder    => '_body',
-    lazy_build => 1,
+has policy_type => (
+    is      => 'rw',
+    isa     => 'Str',
+    builder => '_policy_type',
 );
 
-sub _message {
+sub _sec_id {
     my ($self) = @_;
-    my ($ns, $message) = split_ns($self->node->getAttribute('message'));
+    my @attributes = $self->node->getAttributes();
 
-    for my $msg (@{ $self->document->messages }) {
-        return $msg if $msg->name eq $message;
-    }
 }
 
+sub _policy_type {
+    my ($self) = @_;
+    my @nodes = $self->document->xpc->findnodes('wsdl:operation', $self->node);
+
+}
 
 1;
 
@@ -54,16 +48,16 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::WSDL::Document::InOutPuts - <One-line description of module's purpose>
+W3C::SOAP::WSDL::Document::Policy - Extracted policy information
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::InOutPuts version 0.0.2.
+This documentation refers to W3C::SOAP::WSDL::Document::Policy version 0.0.2.
 
 
 =head1 SYNOPSIS
 
-   use W3C::SOAP::WSDL::Document::InOutPuts;
+   use W3C::SOAP::WSDL::Document::Policy;
 
    # Brief but working code example(s) here showing the most common usage(s)
    # This section will be as far as many users bother reading, so make it as
@@ -72,16 +66,7 @@ This documentation refers to W3C::SOAP::WSDL::Document::InOutPuts version 0.0.2.
 
 =head1 DESCRIPTION
 
-A full description of the module and its features.
-
-May include numerous subsections (i.e., =head2, =head3, etc.).
-
-
 =head1 SUBROUTINES/METHODS
-
-=over 4
-
-=back
 
 =head1 DIAGNOSTICS
 

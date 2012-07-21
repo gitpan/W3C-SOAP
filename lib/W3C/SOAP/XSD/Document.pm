@@ -24,10 +24,7 @@ use W3C::SOAP::XSD::Document::SimpleType;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.1');
-our @EXPORT_OK   = qw//;
-our %EXPORT_TAGS = ();
-#our @EXPORT      = qw//;
+our $VERSION     = version->new('0.0.2');
 
 has imports => (
     is         => 'rw',
@@ -185,7 +182,6 @@ sub _simple_type {
         die "No name for simple type ".$type->node->parentNode->toString if !$name;
         $simple_type{$name} = $type;
     }
-    #warn "created: $self\n\t", join "\t", sort keys %simple_type;
 
     return \%simple_type;
 }
@@ -227,7 +223,7 @@ sub _complex_types {
                 }
             }
             else {
-                warn "?????? ". $parent->nodeName;
+                warn "Don't know how to handle ". $parent->nodeName . " in " . $node->nodeName;
             }
         }
         else {
@@ -344,7 +340,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.1.
+This documentation refers to W3C::SOAP::XSD::Document version 0.0.2.
 
 =head1 SYNOPSIS
 
