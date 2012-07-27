@@ -7,6 +7,7 @@ package W3C::SOAP::XSD::Parser;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -25,7 +26,7 @@ Moose::Exporter->setup_import_methods(
     as_is => ['load_xsd'],
 );
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -125,7 +126,8 @@ sub write_modules {
             for my $element (@{ $type->sequence }) {
                 next if $element->simple_type;
                 my ($ns) = split_ns($element->type);
-                my $ns_uri = $element->document->get_ns_uri($ns);
+                $ns ||= $element->document->target_namespace;
+                my $ns_uri = $element->document->get_ns_uri($ns, $element->node);
                 $modules{ $type->document->get_module_base($ns_uri) }++
                     if $ns_uri && $ns_uri ne $type->document->target_namespace;
             }
@@ -172,7 +174,11 @@ my %written;
 sub write_module {
     my ($self, $tt, $data, $file) = @_;
     my $template = $self->template;
-    confess "Already written $file!\n" if $written{$file}++;
+
+     if ($written{$file}++) {
+        warn "Already written $file!\n";
+        return;
+    }
 
     $template->process($tt, $data, "$file");
     die "Error in creating $file (via $tt): ". $template->error."\n"
@@ -253,7 +259,7 @@ sub dynamic_classes {
             my $type_name = $type->name || $type->parent_node->name;
             my $type_module = $module . '::' . $type_name;
 
-            if ( $type->extension && !$seen{ $type->extension } ) {
+            if ( $type->extension && !$seen{ $type->extension }++ ) {
                 push @xsds, $xsd;
                 next XSD;
             }
@@ -431,7 +437,7 @@ W3C::SOAP::XSD::Parser - Parse an W3C::SOAP::XSD::Document and create perl modul
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.0.2.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.0.3.
 
 =head1 SYNOPSIS
 

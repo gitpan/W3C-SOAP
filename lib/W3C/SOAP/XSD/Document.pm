@@ -7,6 +7,7 @@ package W3C::SOAP::XSD::Document;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp qw/carp croak cluck confess longmess/;
 use Scalar::Util;
@@ -18,13 +19,15 @@ use Path::Class;
 use XML::LibXML;
 use WWW::Mechanize;
 use TryCatch;
+use URI;
+use W3C::SOAP::Exception;
 use W3C::SOAP::XSD::Document::Element;
 use W3C::SOAP::XSD::Document::ComplexType;
 use W3C::SOAP::XSD::Document::SimpleType;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has imports => (
     is         => 'rw',
@@ -62,6 +65,13 @@ has simple_type => (
     builder    => '_simple_type',
     lazy_build => 0,
 );
+has anon_simple_type_count => (
+    is      => 'ro',
+    isa     => 'Int',
+    traits  => [qw/Counter/],
+    default => -1,
+    handles => { simple_type_count => 'inc' },
+);
 has complex_types => (
     is         => 'rw',
     isa        => 'ArrayRef[W3C::SOAP::XSD::Document::ComplexType]',
@@ -73,6 +83,13 @@ has complex_type => (
     isa        => 'HashRef[W3C::SOAP::XSD::Document::ComplexType]',
     builder    => '_complex_type',
     lazy_build => 0,
+);
+has anon_complex_type_count => (
+    is      => 'ro',
+    isa     => 'Int',
+    traits  => [qw/Counter/],
+    default => -1,
+    handles => { complex_type_count => 'inc' },
 );
 has elements => (
     is         => 'rw',
@@ -113,8 +130,19 @@ sub _imports {
     my @nodes = $self->xpc->findnodes('//xsd:import');
 
     for my $import (@nodes) {
-        my $location = $import->getAttribute('schemaLocation');
-        push @imports, __PACKAGE__->new( location => $location, ns_module_map => $self->ns_module_map );
+        my $location = $import->getAttribute('schemaLocation')
+            || $import->getAttribute('namespace');
+        confess "No schemaLocation specified for ".$import->toString
+            if !$location;
+
+        if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
+            $location = URI->new_abs($location, $self->location) . '';
+        }
+
+        push @imports, __PACKAGE__->new(
+            location      => $location,
+            ns_module_map => $self->ns_module_map,
+        );
     }
 
     return \@imports;
@@ -135,8 +163,19 @@ sub _includes {
     my @nodes = $self->xpc->findnodes('//xsd:include');
 
     for my $include (@nodes) {
-        my $location = $include->getAttribute('schemaLocation');
-        push @includes, __PACKAGE__->new( location => $location, ns_module_map => $self->ns_module_map );
+        my $location = $include->getAttribute('schemaLocation')
+            || $include->getAttribute('namespace');
+        confess "No schemaLocation specified for ".$include->toString
+            if !$location;
+
+        if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
+            $location = URI->new_abs($location, $self->location) . '';
+        }
+
+        push @includes, __PACKAGE__->new(
+            location      => $location,
+            ns_module_map => $self->ns_module_map,
+        );
     }
 
     return \@includes;
@@ -166,7 +205,6 @@ sub _simple_types {
     return \@simple_types;
 }
 
-my $simple_type_count = 0;
 sub _simple_type {
     my ($self) = @_;
     my %simple_type;
@@ -176,7 +214,7 @@ sub _simple_type {
         if ( !$name ) {
             my $parent = $type->node->parentNode;
             $name = $parent->getAttribute('name');
-            $name = $name ? 'anon'.$simple_type_count++ : $name;
+            $name = $name ? $name . '_type' : 'anon'.$self->simple_type_count;
             $type->name($name);
         }
         die "No name for simple type ".$type->node->parentNode->toString if !$name;
@@ -189,68 +227,55 @@ sub _simple_type {
 sub _complex_types {
     my ($self) = @_;
     my @complex_types;
-    my @nodes = $self->xpc->findnodes('//xsd:complexType');
+    my @nodes = $self->xpc->findnodes('/*/xsd:complexType');
 
     for my $node (@nodes) {
-        my $parent = $node->parentNode;
-        if ( $parent->nodeName !~ /\bschema$/ ) {
-            if ( $parent->nodeName =~ /\belement/ ) {
-                # check if complexType is in document element
-                for my $element (@{ $self->elements }) {
-                    if ( $parent->getAttribute('name') eq $element->name ) {
-                        $parent = $element;
-                        last;
-                    }
-                }
-
-                # check if we did not found parent in document element parent
-                if ( $parent->isa('XML::LibXML::Element') ) {
-                    # now look in complexTypes
-                    for my $complex_type (@complex_types) {
-                        for my $element (@{ $complex_type->sequence }) {
-                            if ( $parent->getAttribute('name') eq $element->name ) {
-                                $parent = $element;
-                                last;
-                            }
-                        }
-                    }
-                    if ( $parent->isa('XML::LibXML::Element') ) {
-                        W3C::SOAP::Exception->throw(
-                            error => "Could not find the parent elment for complexType "
-                                . $parent->getAttribute('name') . "!",
-                        );
-                    }
-                }
-            }
-            else {
-                warn "Don't know how to handle ". $parent->nodeName . " in " . $node->nodeName;
-            }
-        }
-        else {
-            $parent = undef;
-        }
-
+        # get all top level complex types
         try {
             push @complex_types, W3C::SOAP::XSD::Document::ComplexType->new(
-                ($parent ? (parent_node => $parent) : ()),
                 document => $self,
                 node     => $node,
             );
         }
         catch ($e) {
             warn Dumper {
-                ($parent ? (parent_node => $parent->toString) : ()),
                 document => $self,
                 node     => $node,
             };
-            $e->throw;
+            die $e;
+        }
+
+    }
+
+    # now itterate over all document level elements and elements of complex types
+    my @elements = ( @{ $self->elements }, map {@{ $_->sequence }} @complex_types );
+
+    while ( my $element = shift @elements ) {
+        # Get the elements first sub complex type (if any)
+        my ($node) = $self->xpc->findnodes('xsd:complexType', $element->node);
+        next unless $node;
+
+        try {
+            push @complex_types, W3C::SOAP::XSD::Document::ComplexType->new(
+                parent_node => $element,
+                document    => $self,
+                node        => $node,
+            );
+            push @elements, @{ $complex_types[-1]->sequence };
+        }
+        catch ($e) {
+            warn Dumper {
+                parent_node => $element->node->toString,
+                document    => $self,
+                node        => $node,
+            };
+            die $e;
         }
     }
 
     return \@complex_types;
 }
 
-my $complex_type_count = 0;
 sub _complex_type {
     my ($self) = @_;
     my %complex_type;
@@ -259,7 +284,7 @@ sub _complex_type {
         if ( !$name ) {
             my $parent = $type->node->parentNode;
             $name = $parent->getAttribute('name');
-            $name = $name ? 'Anon'.$complex_type_count++ : $name;
+            $name = $name ? $name . 'Type' : 'Anon'.$self->complex_type_count;
             $type->name($name);
         }
         die "No name for complex type ".$type->node->parentNode->toString if !$name;
@@ -296,8 +321,8 @@ sub _element {
 sub _module {
     my ($self) = @_;
 
-    die "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
-    die "No mapping specified for the namespace ", $self->target_namespace, "!\n" if !$self->ns_module_map->{$self->target_namespace};
+    confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
+    confess "No mapping specified for the namespace ", $self->target_namespace, "!\n" if !$self->ns_module_map->{$self->target_namespace};
 
     return $self->ns_module_map->{$self->target_namespace};
 }
@@ -308,14 +333,26 @@ sub _ns_map {
     my %map
         = map {$_->name =~ /^xmlns:?(.*)$/; ($1 => $_->value)}
         grep { $_->name =~ /^xmlns/ }
-        $self->xml->firstChild->getAttributes;
+        $self->xml->getDocumentElement->getAttributes;
+
+    my %rev = reverse %map;
+    $map{$self->target_namespace} = $self->target_namespace if !$rev{$self->target_namespace};
 
     return \%map;
 }
 
 sub get_ns_uri {
-    my ($self, $ns_name) = @_;
+    my ($self, $ns_name, $node) = @_;
     confess "No namespace passed when trying to map a namespace uri!\n" if !defined $ns_name;
+
+    return $self->ns_map->{$ns_name} if $self->ns_map->{$ns_name};
+
+    while ($node) {
+        my $ns = $node->getAttribute("xmlns:$ns_name");
+        return $ns if $ns;
+        $node = $node->parentNode;
+    }
+
     confess "Couldn't find the namespace '$ns_name' to map\nMap has:\n", Dumper $self->ns_map if !$self->ns_map->{$ns_name};
 
     return $self->ns_map->{$ns_name};
@@ -324,8 +361,8 @@ sub get_ns_uri {
 sub get_module_base {
     my ($self, $ns) = @_;
 
-    die "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
-    die "No mapping specified for the namespace $ns!\n"        if !$self->ns_module_map->{$ns};
+    confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
+    confess "No mapping specified for the namespace $ns!\n"        if !$self->ns_module_map->{$ns};
 
     return $self->ns_module_map->{$ns};
 }
@@ -340,7 +377,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.0.2.
+This documentation refers to W3C::SOAP::XSD::Document version 0.0.3.
 
 =head1 SYNOPSIS
 

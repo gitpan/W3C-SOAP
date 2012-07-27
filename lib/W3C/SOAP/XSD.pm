@@ -7,6 +7,7 @@ package W3C::SOAP::XSD;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp qw/carp croak cluck confess longmess/;
 use Scalar::Util;
@@ -22,7 +23,7 @@ use W3C::SOAP::Utils qw/split_ns/;
 use TryCatch;
 use DateTime::Format::Strptime qw/strptime/;
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has xsd_ns => (
     is  => 'rw',
@@ -275,10 +276,12 @@ sub xsd_subtype {
     my ($self, %args) = @_;
     my $parent_type = $args{module} || $args{parent};
     # upgrade dates
-    $parent_type = 'xsd:date'     if $parent_type eq 'xs:date';
-    $parent_type = 'xsd:dateTime' if $parent_type eq 'xs:dateTime';
-    $parent_type = 'xsd:boolean'  if $parent_type eq 'xs:boolean';
-    $parent_type = 'xsd:double'   if $parent_type eq 'xs:double';
+    $parent_type
+        = $parent_type eq 'xs:date'     ? 'xsd:date'
+        : $parent_type eq 'xs:dateTime' ? 'xsd:dateTime'
+        : $parent_type eq 'xs:boolean'  ? 'xsd:boolean'
+        : $parent_type eq 'xs:double'   ? 'xsd:double'
+        :                                 $parent_type;
 
     my $parent_type_name = $args{list} ? "ArrayRef[$parent_type]" : $parent_type;
     my $subtype = $parent_type =~ /^xsd:\w/ && Moose::Util::TypeConstraints::find_type_constraint($parent_type_name);
@@ -339,7 +342,7 @@ W3C::SOAP::XSD - The parent module to XSD modules
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD version 0.0.2.
+This documentation refers to W3C::SOAP::XSD version 0.0.3.
 
 =head1 SYNOPSIS
 

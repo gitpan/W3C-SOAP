@@ -7,6 +7,7 @@ package W3C::SOAP::WSDL::Document;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -24,7 +25,7 @@ use W3C::SOAP::WSDL::Document::Service;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has messages => (
     is         => 'rw',
@@ -242,10 +243,19 @@ sub _schemas {
     my @nodes = $self->xpc->findnodes('//wsdl:types/*');
 
     for my $node (@nodes) {
+        # merge document namespaces into the schema's tags
+        my $doc = $self->xml->getDocumentElement;
+        my @attribs = $doc->getAttributes;
+        for my $ns ( grep {$_->name =~ /^xmlns:/ && !$node->getAttribute($_->name)} @attribs ) {
+            $node->setAttribute( $ns->name, 'value' );
+            $node->setAttribute( $ns->name, $ns->value );
+        }
+
         push @complex_types, W3C::SOAP::XSD::Document->new(
             string        => $node->toString,
-            ns_module_map => $self->ns_module_map ,
+            ns_module_map => $self->ns_module_map,
         );
+        $complex_types[-1]->location($self->location);
     }
 
     return \@complex_types;
@@ -294,7 +304,7 @@ W3C::SOAP::WSDL::Document - Object to represent a WSDL Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document version 0.0.2.
+This documentation refers to W3C::SOAP::WSDL::Document version 0.0.3.
 
 =head1 SYNOPSIS
 

@@ -7,12 +7,13 @@ package W3C::SOAP::XSD::Document::Node;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has '+parent_node' => (
     isa    => 'Maybe[W3C::SOAP::XSD::Document::Node]',
@@ -28,7 +29,7 @@ W3C::SOAP::XSD::Document::Node - <One-line description of module's purpose>
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Node version 0.0.2.
+This documentation refers to W3C::SOAP::XSD::Document::Node version 0.0.3.
 
 
 =head1 SYNOPSIS

@@ -7,6 +7,7 @@ package W3C::SOAP::WSDL;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -17,7 +18,7 @@ use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Client';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 sub _request {
     my ($self, $action, @args) = @_;
@@ -73,7 +74,7 @@ W3C::SOAP::WSDL - A SOAP WSDL Client object
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL version 0.0.2.
+This documentation refers to W3C::SOAP::WSDL version 0.0.3.
 
 
 =head1 SYNOPSIS

@@ -7,6 +7,7 @@ package W3C::SOAP::WSDL::Document::Policy;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -17,7 +18,7 @@ use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has sec_id => (
     is      => 'rw',
@@ -52,7 +53,7 @@ W3C::SOAP::WSDL::Document::Policy - Extracted policy information
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::Policy version 0.0.2.
+This documentation refers to W3C::SOAP::WSDL::Document::Policy version 0.0.3.
 
 
 =head1 SYNOPSIS

@@ -7,6 +7,7 @@ package W3C::SOAP::Document::Node;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -15,7 +16,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has node => (
     is       => 'rw',
@@ -42,6 +43,7 @@ has document => (
 has name => (
     is         => 'rw',
     isa        => 'Maybe[Str]',
+    predicate  => 'has_name',
     builder    => '_name',
     lazy_build => 1,
 );
@@ -88,7 +90,7 @@ W3C::SOAP::Document::Node - The super class for document nodes
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document::Node version 0.0.2.
+This documentation refers to W3C::SOAP::Document::Node version 0.0.3.
 
 =head1 SYNOPSIS
 

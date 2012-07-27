@@ -27,8 +27,11 @@ WriteMakefile
                  },
   'INSTALLDIRS' => 'site',
   'EXE_FILES' => [
+                   'bin/get-xml-resources',
                    'bin/wsdl-parser',
-                   'bin/xsd-parser'
+                   'bin/wsdl-parser~',
+                   'bin/xsd-parser',
+                   'bin/xsd-parser~'
                  ],
   'PL_FILES' => {}
 )

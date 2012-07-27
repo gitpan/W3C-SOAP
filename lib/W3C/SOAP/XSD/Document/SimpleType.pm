@@ -7,6 +7,7 @@ package W3C::SOAP::XSD::Document::SimpleType;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp;
 use Scalar::Util;
@@ -18,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has type => (
     is         => 'rw',
@@ -102,7 +103,10 @@ sub moose_type {
 sub moose_base_type {
     my ($self) = @_;
     my ($ns, $type) = split_ns($self->type);
-    my $ns_uri = $self->document->get_ns_uri($ns);
+    $ns ||= $self->document->target_namespace;
+    return "xs:$type" if $self->document->ns_map->{$ns} && $self->document->ns_map->{$ns} eq 'http://www.w3.org/2001/XMLSchema';
+
+    my $ns_uri = $self->document->get_ns_uri($ns, $self->node);
 
     return "xs:$type" if $ns_uri eq 'http://www.w3.org/2001/XMLSchema';
 
@@ -126,7 +130,7 @@ W3C::SOAP::XSD::Document::SimpleType - <One-line description of module's purpose
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.0.2.
+This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.0.3.
 
 
 =head1 SYNOPSIS

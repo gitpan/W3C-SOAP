@@ -1,8 +1,9 @@
 package W3C::SOAP::Exception;
 use Moose;
+use warnings;
 extends 'MooseX::Exception::Base';
 
-our $VERSION = version->new('0.0.2');
+our $VERSION = version->new('0.0.3');
 
 has '+_verbose' => (
     default => 2,
@@ -28,21 +29,33 @@ has detail => (
 
 package W3C::SOAP::Exception::HTTP;
 use Moose;
+use warnings;
 extends 'W3C::SOAP::Exception';
 
-our $VERSION = version->new('0.0.2');
+our $VERSION = version->new('0.0.3');
+
+package W3C::SOAP::Exception::XML;
+use Moose;
+use warnings;
+extends 'W3C::SOAP::Exception';
+
+our $VERSION = version->new('0.0.3');
+
+has '+detail' => ( default => 'XML', stringify_pre => 'Type : ' );
 
 package W3C::SOAP::Exception::Doomed;
 use Moose;
+use warnings;
 extends 'W3C::SOAP::Exception';
 
-our $VERSION = version->new('0.0.2');
+our $VERSION = version->new('0.0.3');
 
 package W3C::SOAP::Exception::BadInput;
 use Moose;
+use warnings;
 extends 'MooseX::Exception::Base';
 
-our $VERSION = version->new('0.0.2');
+our $VERSION = version->new('0.0.3');
 
 has param => (
     is   => 'rw',

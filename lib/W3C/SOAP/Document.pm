@@ -7,15 +7,16 @@ package W3C::SOAP::Document;
 # $Revision$, $Source$, $Date$
 
 use Moose;
+use warnings;
 use version;
 use Carp qw/carp croak cluck confess longmess/;
 use Scalar::Util;
 use List::Util;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
+use TryCatch;
 
-
-our $VERSION     = version->new('0.0.2');
+our $VERSION     = version->new('0.0.3');
 
 has string => (
     is         => 'rw',
@@ -54,10 +55,22 @@ around BUILDARGS => sub {
         :              {@args};
 
     if ( $args->{string} ) {
-        $args->{xml} = XML::LibXML->load_xml(string => $args->{string});
+        try {
+            $args->{xml} = XML::LibXML->load_xml(string => $args->{string});
+        }
+        catch($e) {
+            chomp $e;
+            W3C::SOAP::Exception::XML->throw( error => $e, faultstring => $e );
+        }
     }
     elsif ( $args->{location} ) {
-        $args->{xml} = XML::LibXML->load_xml(location => $args->{location});
+        try {
+            $args->{xml} = XML::LibXML->load_xml(location => $args->{location});
+        }
+        catch($e) {
+            chomp $e;
+            W3C::SOAP::Exception::XML->throw( error => $e, faultstring => $args->{location} );
+        }
     }
 
     return $class->$orig($args);
@@ -75,13 +88,14 @@ sub _xpc {
     return $xpc;
 }
 
+my $anon = 0;
 sub _target_namespace {
     my ($self) = @_;
-    my $ns  = $self->xml->firstChild->getAttribute('targetNamespace');
-    my $xpc  = $self->xpc;
-    $xpc->registerNs(ns   => $ns) if $ns;
+    my $ns  = $self->xml->getDocumentElement->getAttribute('targetNamespace');
+    my $xpc = $self->xpc;
+    $xpc->registerNs(ns => $ns) if $ns;
 
-    return $ns;
+    return $ns || $self->location || 'NsAnon' . $anon++;
 }
 
 1;
@@ -94,7 +108,7 @@ W3C::SOAP::Document - Object to represent an XML Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document version 0.0.2.
+This documentation refers to W3C::SOAP::Document version 0.0.3.
 
 =head1 SYNOPSIS
 
