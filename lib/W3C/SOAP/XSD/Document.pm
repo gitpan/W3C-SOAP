@@ -27,7 +27,7 @@ use W3C::SOAP::XSD::Document::SimpleType;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.3');
+our $VERSION     = version->new('0.0.4');
 
 has imports => (
     is         => 'rw',
@@ -109,6 +109,12 @@ has module => (
     builder   => '_module',
     lazy_build => 1,
 );
+has ns_name => (
+    is        => 'rw',
+    isa       => 'Str',
+    builder   => '_ns_name',
+    lazy_build => 1,
+);
 has ns_map => (
     is         => 'rw',
     isa        => 'HashRef[Str]',
@@ -130,6 +136,8 @@ sub _imports {
     my @nodes = $self->xpc->findnodes('//xsd:import');
 
     for my $import (@nodes) {
+        next if $import->getAttribute('namespace') && $import->getAttribute('namespace') eq 'http://www.w3.org/2001/XMLSchema';
+
         my $location = $import->getAttribute('schemaLocation')
             || $import->getAttribute('namespace');
         confess "No schemaLocation specified for ".$import->toString
@@ -163,6 +171,8 @@ sub _includes {
     my @nodes = $self->xpc->findnodes('//xsd:include');
 
     for my $include (@nodes) {
+        next if $include->getAttribute('namespace') && $include->getAttribute('namespace') eq 'http://www.w3.org/2001/XMLSchema';
+
         my $location = $include->getAttribute('schemaLocation')
             || $include->getAttribute('namespace');
         confess "No schemaLocation specified for ".$include->toString
@@ -217,7 +227,7 @@ sub _simple_type {
             $name = $name ? $name . '_type' : 'anon'.$self->simple_type_count;
             $type->name($name);
         }
-        die "No name for simple type ".$type->node->parentNode->toString if !$name;
+        confess "No name for simple type ".$type->node->parentNode->toString if !$name;
         $simple_type{$name} = $type;
     }
 
@@ -287,7 +297,7 @@ sub _complex_type {
             $name = $name ? $name . 'Type' : 'Anon'.$self->complex_type_count;
             $type->name($name);
         }
-        die "No name for complex type ".$type->node->parentNode->toString if !$name;
+        confess "No name for complex type ".$type->node->parentNode->toString if !$name;
         $complex_type{$name} = $type;
     }
 
@@ -320,11 +330,20 @@ sub _element {
 
 sub _module {
     my ($self) = @_;
+    my $ns = URI->new($self->target_namespace);
+    $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
 
     confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
-    confess "No mapping specified for the namespace ", $self->target_namespace, "!\n" if !$self->ns_module_map->{$self->target_namespace};
+    confess "No mapping specified for the namespace ", $ns, "!\n"  if !$self->ns_module_map->{$ns};
 
-    return $self->ns_module_map->{$self->target_namespace};
+    return $self->ns_module_map->{$ns};
+}
+
+sub _ns_name {
+    my ($self) = @_;
+    my %rev = reverse %{ $self->ns_map };
+    confess "No ns name\n".Dumper \%rev, $self->target_namespace if !$rev{$self->target_namespace};
+    return $rev{$self->target_namespace};
 }
 
 sub _ns_map {
@@ -335,8 +354,17 @@ sub _ns_map {
         grep { $_->name =~ /^xmlns/ }
         $self->xml->getDocumentElement->getAttributes;
 
-    my %rev = reverse %map;
-    $map{$self->target_namespace} = $self->target_namespace if !$rev{$self->target_namespace};
+    my %rev;
+    for my $name ( keys %map ) {
+        $rev{$map{$name}} ||= $name;
+    }
+    if ( $rev{$self->target_namespace} && $map{''} && $map{''} eq $self->target_namespace ) {
+        delete $map{''};
+    }
+
+    my $ns = $self->target_namespace;
+    $ns =~ s/:/_/g;
+    $map{$ns} = $self->target_namespace if !$rev{$self->target_namespace};
 
     return \%map;
 }
@@ -351,6 +379,7 @@ sub get_ns_uri {
         my $ns = $node->getAttribute("xmlns:$ns_name");
         return $ns if $ns;
         $node = $node->parentNode;
+        last if ref $node eq 'XML::LibXML::Document';
     }
 
     confess "Couldn't find the namespace '$ns_name' to map\nMap has:\n", Dumper $self->ns_map if !$self->ns_map->{$ns_name};
@@ -360,6 +389,8 @@ sub get_ns_uri {
 
 sub get_module_base {
     my ($self, $ns) = @_;
+    $ns = URI->new($ns);
+    $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
 
     confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
     confess "No mapping specified for the namespace $ns!\n"        if !$self->ns_module_map->{$ns};
@@ -377,7 +408,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.0.3.
+This documentation refers to W3C::SOAP::XSD::Document version 0.0.4.
 
 =head1 SYNOPSIS
 

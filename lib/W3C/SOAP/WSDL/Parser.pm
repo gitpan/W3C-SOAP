@@ -25,7 +25,7 @@ Moose::Exporter->setup_import_methods(
     as_is => ['load_wsdl'],
 );
 
-our $VERSION     = version->new('0.0.3');
+our $VERSION     = version->new('0.0.4');
 
 has document => (
     is       => 'rw',
@@ -103,7 +103,7 @@ sub write_modules {
         location => $self->location,
     };
     $template->process('wsdl.pm.tt', $data, "$file");
-    die "Error in creating $file (xsd.pm): ". $template->error."\n"
+    confess "Error in creating $file (xsd.pm): ". $template->error."\n"
         if $template->error;
 
 }
@@ -207,7 +207,7 @@ W3C::SOAP::WSDL::Parser - Module to create Moose objects from a WSDL
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Parser version 0.0.3.
+This documentation refers to W3C::SOAP::WSDL::Parser version 0.0.4.
 
 =head1 SYNOPSIS
 

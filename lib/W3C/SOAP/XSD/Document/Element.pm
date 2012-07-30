@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns xml_error/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.0.3');
+our $VERSION     = version->new('0.0.4');
 
 has complex_type => (
     is     => 'rw',
@@ -106,7 +106,7 @@ sub _package {
     my ($self) = @_;
     my $type = $self->type;
     my ($ns, $name) = split_ns($type);
-    $ns ||= $self->document->target_namespace;
+    $ns ||= $self->document->ns_name;
     my $ns_uri = $name ? $self->document->get_ns_uri($ns, $self->node) : '';
     $name ||= $ns;
 
@@ -137,13 +137,13 @@ sub _nillble {
 sub module {
     my ($self) = @_;
 
-    return $self->document->get_module_base( $self->document->target_namespace );
+    return $self->document->module;
 }
 
 sub type_module {
     my ($self) = @_;
     my ($ns, $type) = split_ns($self->type);
-    $ns ||= $self->document->target_namespace;
+    $ns ||= $self->document->ns_name;
     my $ns_uri = $self->document->get_ns_uri($ns, $self->node);
 
     return $self->simple_type || $self->document->get_module_base( $ns_uri ) . '::' . $type;
@@ -153,8 +153,10 @@ sub simple_type {
     my ($self) = @_;
     $self->document->simple_type();
     my ($ns, $type) = split_ns($self->type);
-    $ns ||= $self->document->target_namespace;
-    return "xs:$type" if $self->document->ns_map->{$ns} && $self->document->ns_map->{$ns} eq 'http://www.w3.org/2001/XMLSchema';
+    $ns ||= $self->document->ns_name;
+    return "xs:$type"
+        if $self->document->ns_map->{$ns}
+            && $self->document->ns_map->{$ns} eq 'http://www.w3.org/2001/XMLSchema';
 
     my $ns_uri = $self->document->get_ns_uri($ns, $self->node);
     warn "Simple type missing a type for '".$self->type."'\n".xml_error($self->node)."\n"
@@ -181,7 +183,7 @@ sub very_simple_type {
     my ($self) = @_;
     $self->document->simple_type();
     my ($ns, $type) = split_ns($self->type);
-    $ns ||= $self->document->target_namespace;
+    $ns ||= $self->document->ns_name;
     return "xs:$type" if $self->document->ns_map->{$ns} && $self->document->ns_map->{$ns} eq 'http://www.w3.org/2001/XMLSchema';
 
     my $ns_uri = $self->document->get_ns_uri($ns, $self->node);
@@ -207,7 +209,7 @@ sub very_simple_type {
 sub moosex_type {
     my ($self) = @_;
     my ($ns, $type) = split_ns($self->type);
-    $ns ||= $self->document->target_namespace;
+    $ns ||= $self->document->ns_name;
     my $ns_uri = $self->document->get_ns_uri($ns, $self->node);
     warn "Simple type missing a type for '".$self->type."'\n".xml_error($self->node)."\n"
         if !$ns && $ns_uri ne 'http://www.w3.org/2001/XMLSchema';
@@ -233,11 +235,12 @@ sub has_anonymous {
     my ($self) = @_;
     return if $self->has_type && $self->type;
 
+    my %map = reverse %{ $self->document->ns_map };
+
     my $simple = $self->document->simple_type;
     for my $type (keys %{$simple}) {
         my  $type_name = $simple->{$type}->node->parentNode->getAttribute('name');
         if ( $type_name && $self->name && $type_name eq $self->name ) {
-            my %map = reverse %{ $self->document->ns_map };
             return $map{$self->document->target_namespace} . ':' . $type;
         }
         $type_name ||= '';
@@ -247,12 +250,12 @@ sub has_anonymous {
     for my $type (keys %{$complex}) {
         my  $type_name = $complex->{$type}->node->parentNode->getAttribute('name');
         if ( $type_name && $self->name && $type_name eq $self->name ) {
-            my %map = reverse %{ $self->document->ns_map };
             return $map{$self->document->target_namespace} . ':' . $type;
         }
         $type_name ||= '';
     }
 
+    $self->document->ns_map->{xs} ||= 'http://www.w3.org/2001/XMLSchema';
     return 'xs:string';
 }
 
@@ -266,7 +269,7 @@ W3C::SOAP::XSD::Document::Element - XML Schema Element
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Element version 0.0.3.
+This documentation refers to W3C::SOAP::XSD::Document::Element version 0.0.4.
 
 
 =head1 SYNOPSIS

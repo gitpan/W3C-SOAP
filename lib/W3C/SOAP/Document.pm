@@ -15,8 +15,9 @@ use List::Util;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use TryCatch;
+use URI;
 
-our $VERSION     = version->new('0.0.3');
+our $VERSION     = version->new('0.0.4');
 
 has string => (
     is         => 'rw',
@@ -79,6 +80,7 @@ around BUILDARGS => sub {
 sub _xpc {
     my ($self) = @_;
     my $xpc = XML::LibXML::XPathContext->new($self->xml);
+    $xpc->registerNs(xs   => 'http://www.w3.org/2001/XMLSchema');
     $xpc->registerNs(xsd  => 'http://www.w3.org/2001/XMLSchema');
     $xpc->registerNs(wsdl => 'http://schemas.xmlsoap.org/wsdl/');
     $xpc->registerNs(wsp  => 'http://schemas.xmlsoap.org/ws/2004/09/policy');
@@ -95,7 +97,10 @@ sub _target_namespace {
     my $xpc = $self->xpc;
     $xpc->registerNs(ns => $ns) if $ns;
 
-    return $ns || $self->location || 'NsAnon' . $anon++;
+    my $uri = URI->new($ns || $self->location || 'NsAnon' . $anon++);
+    $uri->host( lc $uri->host ) if $uri->can('host') && $uri->host;
+
+    return "$uri";
 }
 
 1;
@@ -108,7 +113,7 @@ W3C::SOAP::Document - Object to represent an XML Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document version 0.0.3.
+This documentation refers to W3C::SOAP::Document version 0.0.4.
 
 =head1 SYNOPSIS
 

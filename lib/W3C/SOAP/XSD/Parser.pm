@@ -12,7 +12,7 @@ use version;
 use Carp;
 use Scalar::Util;
 use List::Util;
-#use List::MoreUtils;
+use List::MoreUtils qw/all/;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use Path::Class;
@@ -26,7 +26,7 @@ Moose::Exporter->setup_import_methods(
     as_is => ['load_xsd'],
 );
 
-our $VERSION     = version->new('0.0.3');
+our $VERSION     = version->new('0.0.4');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -84,7 +84,7 @@ sub write_modules {
 
     # process the schemas
     for my $xsd (@xsds) {
-        my $module = $xsd->get_module_base($xsd->target_namespace);
+        my $module = $xsd->module;
         push @xsd_modules, $module;
         $self_module ||= $module;
         my $file   = $self->lib . '/' . $module;
@@ -181,7 +181,7 @@ sub write_module {
     }
 
     $template->process($tt, $data, "$file");
-    die "Error in creating $file (via $tt): ". $template->error."\n"
+    confess "Error in creating $file (via $tt): ". $template->error."\n"
         if $template->error;
 }
 
@@ -249,7 +249,7 @@ sub dynamic_classes {
     my @ordered_xsds;
     XSD:
     while ( my $xsd = shift @xsds ) {
-        my $module = $xsd->get_module_base($xsd->target_namespace);
+        my $module = $xsd->module;
 
         # Complex types
         my @types = @{ $xsd->complex_types };
@@ -270,14 +270,16 @@ sub dynamic_classes {
         push @ordered_xsds, $xsd;
     }
 
+    my %complex_seen = ( 'W3C::SOAP::XSD' => 1 );
     for my $xsd (@ordered_xsds) {
-        my $module = $xsd->get_module_base($xsd->target_namespace);
+        my $module = $xsd->module;
 
         # Create simple types
         $self->simple_type_package($xsd);
 
         # Complex types
-        for my $type ( @{ $xsd->complex_types } ) {
+        my @complex_types = @{ $xsd->complex_types };
+        while ( my $type = shift @complex_types ) {
             my $type_name = $type->name || $type->parent_node->name;
             my $type_module = $module . '::' . $type_name;
 
@@ -290,6 +292,12 @@ sub dynamic_classes {
                 $modules{ $type->extension }++
             }
 
+            if ( !all {$complex_seen{$_}} keys %modules ) {
+                push @complex_types, $type;
+                next;
+            }
+
+            $complex_seen{$type_module}++;
             $self->complex_type_package($xsd, $type, $type_module, [ keys %modules ]);
         }
 
@@ -404,6 +412,7 @@ sub element_attributes {
     push @extra, ( xs_choice_group => $element->choice_group ) if $element->choice_group;
     push @extra, ( xs_searalize    => $searalize             ) if $searalize;
 
+    confess "No perl name!\n".$element->node->parentNode->toString if !$element->perl_name;
     $class->add_attribute(
         $element->perl_name,
         is            => 'rw',
@@ -437,7 +446,7 @@ W3C::SOAP::XSD::Parser - Parse an W3C::SOAP::XSD::Document and create perl modul
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.0.3.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.0.4.
 
 =head1 SYNOPSIS
 
