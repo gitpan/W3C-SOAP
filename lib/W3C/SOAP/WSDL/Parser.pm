@@ -25,27 +25,24 @@ Moose::Exporter->setup_import_methods(
     as_is => ['load_wsdl'],
 );
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has document => (
     is       => 'rw',
     isa      => 'W3C::SOAP::WSDL::Document',
     required => 1,
+    handles  => {
+        module          => 'module',
+        has_module      => 'has_module',
+        ns_module_map   => 'ns_module_map',
+        module_base     => 'module_base',
+        has_module_base => 'has_module_base',
+    },
 );
 has template => (
     is        => 'rw',
     isa       => 'Template',
     predicate => 'has_template',
-);
-has ns_module_map => (
-    is       => 'rw',
-    isa      => 'HashRef[Str]',
-    required => 1,
-);
-has module => (
-    is        => 'rw',
-    isa       => 'Str',
-    predicate => 'has_module',
 );
 has location => (
     is  => 'rw',
@@ -65,7 +62,7 @@ around BUILDARGS => sub {
         :              {@args};
 
     for my $arg ( keys %$args ) {
-        if ( $arg eq 'location' || $arg eq 'strign' ) {
+        if ( $arg eq 'location' || $arg eq 'string' ) {
             $args->{document} = W3C::SOAP::WSDL::Document->new($args);
         }
     }
@@ -114,6 +111,12 @@ sub get_xsd {
     my @args;
     push @args, ( template      => $self->template ) if $self->has_template;
     push @args, ( lib           => $self->lib      ) if $self->has_lib     ;
+    if ( $self->has_module_base ) {
+        my $base = $self->module_base;
+        $base =~ s/WSDL/XSD/;
+        $base .= '::XSD' if ! $base =~ /XSD/;
+        push @args, ( module_base => $base );
+    }
 
     my $parse = W3C::SOAP::XSD::Parser->new(
         documents     => [],
@@ -169,10 +172,10 @@ sub dynamic_classes {
                 my $out_element = eval { $operation->port_type->outputs->[0]->message->element };
 
                 $method{ $operation->perl_name } = W3C::SOAP::WSDL::Meta::Method->wrap(
-                    body            => sub { shift->_request($operation->perl_name => @_) },
-                    package_name    => $class_name,
-                    name            => $operation->perl_name,
-                    wsdl_opperation => $operation->name,
+                    body           => sub { shift->_request($operation->perl_name => @_) },
+                    package_name   => $class_name,
+                    name           => $operation->perl_name,
+                    wsdl_operation => $operation->name,
                     $in_element  ? ( in_class      => $in_element->module     ) : (),
                     $in_element  ? ( in_attribute  => $in_element->perl_name  ) : (),
                     $out_element ? ( out_class     => $out_element->module    ) : (),
@@ -207,7 +210,7 @@ W3C::SOAP::WSDL::Parser - Module to create Moose objects from a WSDL
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Parser version 0.0.4.
+This documentation refers to W3C::SOAP::WSDL::Parser version 0.0.5.
 
 =head1 SYNOPSIS
 

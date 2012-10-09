@@ -26,7 +26,7 @@ Moose::Exporter->setup_import_methods(
     as_is => ['load_xsd'],
 );
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -237,12 +237,7 @@ sub dynamic_classes {
 
     # construct the in memory module names
     for my $xsd (@xsds) {
-        my $ns = $xsd->target_namespace;
-        $ns =~ s{://}{::};
-        $ns =~ s{([^:]:)([^:])}{$1:$2}g;
-        $ns =~ s{[^\w:]+}{_}g;
-        $self->ns_module_map->{$xsd->target_namespace}
-            = "Dynamic::XSD::$ns";
+        $xsd->module_base('Dynamic::XSD');
     }
 
     my %seen;
@@ -388,14 +383,14 @@ sub element_attributes {
         || ( $element->max_occurs && $element->max_occurs > 1 )
         || ( $element->min_occurs && $element->min_occurs > 1 );
     my $type_name = $simple || $element->type_module;
-    my $searalize = '';
+    my $serialize = '';
 
     if ( $very_simple ) {
         if ( $very_simple eq 'xs:boolean' ) {
-            $searalize = sub { $_ ? 'true' : 'false' };
+            $serialize = sub { $_ ? 'true' : 'false' };
         }
         elsif ( $very_simple eq 'xs:date' ) {
-            $searalize = sub {
+            $serialize = sub {
                 return $_->ymd if $_->time_zone->isa('DateTime::TimeZone::Floating');
                 my $d = DateTime::Format::Strptime::strftime('%F%z', $_);
                 $d =~ s/([+-]\d\d)(\d\d)$/$1:$2/;
@@ -403,14 +398,14 @@ sub element_attributes {
             };
         }
         elsif ( $very_simple eq 'xs:time' ) {
-            $searalize = sub { $_->hms };
+            $serialize = sub { $_->hms };
         }
     }
 
     my @extra;
     push @extra, ( xs_perl_module  => $element->type_module  ) if !$simple;
     push @extra, ( xs_choice_group => $element->choice_group ) if $element->choice_group;
-    push @extra, ( xs_searalize    => $searalize             ) if $searalize;
+    push @extra, ( xs_serialize    => $serialize             ) if $serialize;
 
     confess "No perl name!\n".$element->node->parentNode->toString if !$element->perl_name;
     $class->add_attribute(
@@ -421,7 +416,8 @@ sub element_attributes {
            list => $is_array,
         ),
         predicate     => 'has_'. $element->perl_name,
-        required      => 0, # TODO $element->nillable,
+        # TODO handle nillable correctly  should be a Maybe type
+        #required      => !$element->nillable,
         coerce        => 1,
     #[%- IF config->alias && element->name.replace('^\w+:', '') != element->perl_name %]
         #alias         => '[% element->name.replace('^\w+:', '') %]',
@@ -446,7 +442,7 @@ W3C::SOAP::XSD::Parser - Parse an W3C::SOAP::XSD::Document and create perl modul
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.0.4.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.0.5.
 
 =head1 SYNOPSIS
 

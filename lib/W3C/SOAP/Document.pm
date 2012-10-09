@@ -17,7 +17,7 @@ use English qw/ -no_match_vars /;
 use TryCatch;
 use URI;
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has string => (
     is         => 'rw',
@@ -47,6 +47,24 @@ has target_namespace => (
     predicate  => 'has_target_namespace',
     lazy_build => 1,
 );
+has ns_module_map => (
+    is        => 'rw',
+    isa       => 'HashRef[Str]',
+    required  => 1,
+    predicate => 'has_ns_module_map',
+);
+has module => (
+    is        => 'rw',
+    isa       => 'Str',
+    predicate => 'has_module',
+    builder   => '_module',
+    lazy_build => 1,
+);
+has module_base => (
+    is        => 'rw',
+    isa       => 'Str',
+    predicate => 'has_module_base',
+);
 
 around BUILDARGS => sub {
     my ($orig, $class, @args) = @_;
@@ -54,6 +72,8 @@ around BUILDARGS => sub {
         = !@args     ? {}
         : @args == 1 ? $args[0]
         :              {@args};
+
+    delete $args->{module_base} if ! defined $args->{module_base};
 
     if ( $args->{string} ) {
         try {
@@ -97,10 +117,38 @@ sub _target_namespace {
     my $xpc = $self->xpc;
     $xpc->registerNs(ns => $ns) if $ns;
 
-    my $uri = URI->new($ns || $self->location || 'NsAnon' . $anon++);
-    $uri->host( lc $uri->host ) if $uri->can('host') && $uri->host;
+    $ns ||= $self->location || 'NsAnon' . $anon++;
+    if ( $ns && $ns =~ /^(?:https?|ftp):/ ) {
+        $ns = URI->new($ns);
+        $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
+        $ns = $ns->as_string;
+    }
 
-    return "$uri";
+    return $ns;
+}
+
+sub _module {
+    my ($self) = @_;
+    my $ns = $self->target_namespace;
+    if ( $ns && $ns =~ /^(?:https?|ftp):/ ) {
+        $ns = URI->new($ns);
+        $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
+        $ns = $ns->as_string;
+    }
+
+    if ( $self->has_module_base ) {
+        my $ns = $self->target_namespace;
+        $ns =~ s{://}{::};
+        $ns =~ s{([^:]:)([^:])}{$1:$2}g;
+        $ns =~ s{[^\w:]+}{_}g;
+        $self->ns_module_map->{$self->target_namespace}
+            = $self->module_base . "::$ns";
+    }
+
+    confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
+    confess "No mapping specified for the namespace ", $ns, "!\n"  if !$self->ns_module_map->{$ns};
+
+    return $self->ns_module_map->{$ns};
 }
 
 1;
@@ -113,7 +161,7 @@ W3C::SOAP::Document - Object to represent an XML Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document version 0.0.4.
+This documentation refers to W3C::SOAP::Document version 0.0.5.
 
 =head1 SYNOPSIS
 

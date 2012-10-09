@@ -15,7 +15,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use Moose::Util::TypeConstraints;
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 Moose::Util::meta_attribute_alias('W3C::SOAP::XSD');
 
@@ -57,10 +57,10 @@ has xs_choice_group => (
     isa       => 'PositiveInt',
     predicate => 'has_xs_choice_group',
 );
-has xs_searalize => (
+has xs_serialize => (
     is        => 'rw',
     isa       => 'CodeRef',
-    predicate => 'has_xs_searalize',
+    predicate => 'has_xs_serialize',
 );
 
 1;
@@ -73,7 +73,7 @@ W3C::SOAP::XSD::Traits - Specifies the traits of an XSD Moose attribute
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Traits version 0.0.4.
+This documentation refers to W3C::SOAP::XSD::Traits version 0.0.5.
 
 
 =head1 SYNOPSIS

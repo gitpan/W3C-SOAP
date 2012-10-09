@@ -20,7 +20,8 @@ use XML::LibXML;
 use W3C::SOAP::Exception;
 use W3C::SOAP::Header;
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
+our $DEBUG_REQUEST_RESPONSE = $ENV{W3C_SOAP_DEBUG_CLIENT};
 
 has location => (
     is       => 'rw',
@@ -36,8 +37,7 @@ has header => (
 has mech => (
     is      => 'rw',
     isa     => 'WWW::Mechanize',
-    default => sub { WWW::Mechanize->new },
-    init_arg => undef,
+    builder => '_mech',
 );
 
 sub request {
@@ -46,7 +46,7 @@ sub request {
 
     if ( $self->has_header ) {
         my $node = $self->header->to_xml($xml);
-        $xml->firstChild->insertBefore($node, $xml->firstChild->firstChild);
+        $xml->firstChild->insertBefore($node, $xml->getDocumentElement->firstChild);
     }
 
     return $self->send($action, $xml);
@@ -118,10 +118,10 @@ sub send {
         }
     };
 
-    my $xml_responce = XML::LibXML->load_xml( string => $content );
-    my $ns = $self->_envelope_ns($xml_responce);
+    my $xml_response = XML::LibXML->load_xml( string => $content );
+    my $ns = $self->_envelope_ns($xml_response);
 
-    my ($node) = $xml_responce->findnodes("//$ns\:Body");
+    my ($node) = $xml_response->findnodes("//$ns\:Body");
 
     return $node;
 }
@@ -156,6 +156,21 @@ sub _header {
     W3C::SOAP::Header->new;
 }
 
+{
+    my $mech;
+    sub _mech {
+        return $mech if $mech;
+        $mech = WWW::Mechanize->new;
+
+        if ($DEBUG_REQUEST_RESPONSE) {
+            $mech->add_handler("request_send",  sub { shift->dump; return });
+            $mech->add_handler("response_done", sub { shift->dump; return });
+        }
+
+        return $mech;
+    }
+}
+
 1;
 
 __END__
@@ -166,7 +181,7 @@ W3C::SOAP::Client - Client to talk SOAP to a server.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Client version 0.0.4.
+This documentation refers to W3C::SOAP::Client version 0.0.5.
 
 =head1 SYNOPSIS
 
@@ -205,6 +220,9 @@ Sends the XML (C<$xml>) to the SOAP Server
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
+The environment variable C<W3C_SOAP_DEBUG_CLIENT> can be used to show
+request and response XML.
+
 =head1 DEPENDENCIES
 
 =head1 INCOMPATIBILITIES
@@ -220,7 +238,6 @@ Patches are welcome.
 =head1 AUTHOR
 
 Ivan Wills - (ivan.wills@gmail.com)
-<Author name(s)>  (<contact address>)
 
 =head1 LICENSE AND COPYRIGHT
 

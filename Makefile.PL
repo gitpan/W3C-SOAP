@@ -34,7 +34,9 @@ WriteMakefile
   'EXE_FILES' => [
                    'bin/get-wsdl-resources',
                    'bin/wsdl-parser',
-                   'bin/xsd-parser'
+                   'bin/wsdl-parser~',
+                   'bin/xsd-parser',
+                   'bin/xsd-parser~'
                  ],
   'PL_FILES' => {}
 )

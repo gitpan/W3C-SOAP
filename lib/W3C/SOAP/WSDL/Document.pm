@@ -25,7 +25,7 @@ use W3C::SOAP::WSDL::Document::Service;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has messages => (
     is         => 'rw',
@@ -105,11 +105,6 @@ has schema => (
     builder    => '_schema',
     lazy_build => 1,
     weak_ref   => 1,
-);
-has ns_module_map => (
-    is       => 'rw',
-    isa      => 'HashRef[Str]',
-    required => 1,
 );
 
 sub _messages {
@@ -253,9 +248,18 @@ sub _schemas {
             $node->setAttribute( $ns->name, $ns->value );
         }
 
+        my @args;
+        if ( $self->has_module_base ) {
+            my $base = $self->module_base;
+            $base =~ s/WSDL/XSD/;
+            $base .= '::XSD' if ! $base =~ /XSD/;
+            push @args, ( module_base => $base );
+        }
+
         push @schemas, W3C::SOAP::XSD::Document->new(
             string        => $node->toString,
             ns_module_map => $self->ns_module_map,
+            @args,
         );
         $schemas[-1]->location($self->location);
         $schemas[-1]->target_namespace;
@@ -307,7 +311,7 @@ W3C::SOAP::WSDL::Document - Object to represent a WSDL Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document version 0.0.4.
+This documentation refers to W3C::SOAP::WSDL::Document version 0.0.5.
 
 =head1 SYNOPSIS
 

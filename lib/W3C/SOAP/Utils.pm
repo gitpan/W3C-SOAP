@@ -17,17 +17,33 @@ use English qw/ -no_match_vars /;
 use W3C::SOAP::WSDL::Meta::Method;
 
 Moose::Exporter->setup_import_methods(
-    as_is     => ['split_ns', 'xml_error'],
+    as_is     => [qw/split_ns xml_error cmp_ns/],
     with_meta => ['operation'],
 );
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 sub split_ns {
     my ($tag) = @_;
     confess "No XML tag passed to split!\n" unless defined $tag;
     my ($ns, $name) = split /:/, $tag, 2;
     return $name ? ($ns, $name) : ('', $ns);
+}
+
+sub cmp_ns {
+    my ($ns1, $ns2) = @_;
+
+    my $uri1 = URI->new($ns1);
+    my $uri2 = URI->new($ns2);
+
+    if ( $uri1->can('host') ) {
+        $uri1->host(lc $uri1->host);
+    }
+    if ( $uri2->can('host') ) {
+        $uri2->host(lc $uri2->host);
+    }
+
+    return $uri1 eq $uri2;
 }
 
 sub xml_error {
@@ -68,7 +84,7 @@ W3C::SOAP::Utils - Utility functions to be used with C<W3C::SOAP> modules
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Utils version 0.0.4.
+This documentation refers to W3C::SOAP::Utils version 0.0.5.
 
 =head1 SYNOPSIS
 
@@ -85,7 +101,7 @@ This documentation refers to W3C::SOAP::Utils version 0.0.4.
        in_class       +> 'MyApp::Some::XSD',
        in_attribute   +> 'wsdl_op_request',
        out_class      +> 'MyApp::Some::XSD',
-       out_attribute  +> 'wsdl_op_responce',
+       out_attribute  +> 'wsdl_op_response',
    );
 
 =head1 DESCRIPTION
@@ -99,6 +115,10 @@ Utility Functions
 =item C<split_ns ($name)>
 
 Splits an XML tag's namespace from the tag name
+
+=item C<cmp_ns ($ns1, $ns2)>
+
+Compare two namespaces (with normalized host parts lower cased)
 
 =item C<xml_error ($xml_node)>
 

@@ -8,7 +8,7 @@ build_requires:
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
-generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112150'
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.110440'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -17,109 +17,109 @@ name: W3C-SOAP
 provides:
   W3C::SOAP:
     file: lib/W3C/SOAP.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Client:
     file: lib/W3C/SOAP/Client.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Document:
     file: lib/W3C/SOAP/Document.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Document::Node:
     file: lib/W3C/SOAP/Document/Node.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Exception:
     file: lib/W3C/SOAP/Exception.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Exception::BadInput:
     file: lib/W3C/SOAP/Exception.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Exception::Doomed:
     file: lib/W3C/SOAP/Exception.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Exception::HTTP:
     file: lib/W3C/SOAP/Exception.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Exception::XML:
     file: lib/W3C/SOAP/Exception.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Header:
     file: lib/W3C/SOAP/Header.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Header::Security:
     file: lib/W3C/SOAP/Header/Security.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Header::Security::Username:
     file: lib/W3C/SOAP/Header/Security/Username.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::Utils:
     file: lib/W3C/SOAP/Utils.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL:
     file: lib/W3C/SOAP/WSDL.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document:
     file: lib/W3C/SOAP/WSDL/Document.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Binding:
     file: lib/W3C/SOAP/WSDL/Document/Binding.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::InOutPuts:
     file: lib/W3C/SOAP/WSDL/Document/InOutPuts.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Message:
     file: lib/W3C/SOAP/WSDL/Document/Message.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Operation:
     file: lib/W3C/SOAP/WSDL/Document/Operation.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Policy:
     file: lib/W3C/SOAP/WSDL/Document/Policy.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Port:
     file: lib/W3C/SOAP/WSDL/Document/Port.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::PortType:
     file: lib/W3C/SOAP/WSDL/Document/PortType.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Document::Service:
     file: lib/W3C/SOAP/WSDL/Document/Service.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Meta::Method:
     file: lib/W3C/SOAP/WSDL/Meta/Method.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::WSDL::Parser:
     file: lib/W3C/SOAP/WSDL/Parser.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD:
     file: lib/W3C/SOAP/XSD.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document:
     file: lib/W3C/SOAP/XSD/Document.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document::ComplexType:
     file: lib/W3C/SOAP/XSD/Document/ComplexType.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document::Element:
     file: lib/W3C/SOAP/XSD/Document/Element.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document::Node:
     file: lib/W3C/SOAP/XSD/Document/Node.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document::SimpleType:
     file: lib/W3C/SOAP/XSD/Document/SimpleType.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Document::Type:
     file: lib/W3C/SOAP/XSD/Document/Type.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Parser:
     file: lib/W3C/SOAP/XSD/Parser.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Traits:
     file: lib/W3C/SOAP/XSD/Traits.pm
-    version: v0.0.4
+    version: v0.0.5
   W3C::SOAP::XSD::Types:
     file: lib/W3C/SOAP/XSD/Types.pm
-    version: v0.0.4
+    version: v0.0.5
 recommends:
   MooseX::Aliases: 0
   Pod::Coverage: 0
@@ -153,4 +153,4 @@ resources:
   bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=W3C::SOAP
   license: http://dev.perl.org/licenses/
   repository: git://github.com/ivanwills/W3C-SOAP.git
-version: v0.0.4
+version: v0.0.5

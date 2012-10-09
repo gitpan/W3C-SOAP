@@ -18,13 +18,13 @@ use English qw/ -no_match_vars /;
 
 extends 'W3C::SOAP::Client';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 sub _request {
     my ($self, $action, @args) = @_;
-    my $meta       = $self->meta;
-    my $method     = $self->_get_operation_method($action);
-    my $opperation = $method->wsdl_opperation;
+    my $meta      = $self->meta;
+    my $method    = $self->_get_operation_method($action);
+    my $operation = $method->wsdl_operation;
     my $resp;
 
     if ( $method->has_in_class && $method->has_in_attribute ) {
@@ -33,10 +33,14 @@ sub _request {
         my $xsd   = $class->new(
             $att => @args == 1 ? $args[0] : {@args},
         );
-        $resp = $self->request( $opperation => $xsd );
+        my $xsd_ns = $xsd->xsd_ns;
+        if ( $xsd_ns !~ m{/$} ) {
+            $xsd_ns .= '/';
+        }
+        $resp = $self->request( "$xsd_ns$operation" => $xsd );
     }
     else {
-        $resp = $self->request( $opperation, @args );
+        $resp = $self->request( $operation, @args );
     }
 
     if ( $method->has_out_class && $method->has_out_attribute ) {
@@ -74,7 +78,7 @@ W3C::SOAP::WSDL - A SOAP WSDL Client object
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL version 0.0.4.
+This documentation refers to W3C::SOAP::WSDL version 0.0.5.
 
 
 =head1 SYNOPSIS

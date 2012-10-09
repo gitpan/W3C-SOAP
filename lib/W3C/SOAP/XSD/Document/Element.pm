@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns xml_error/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has complex_type => (
     is     => 'rw',
@@ -52,10 +52,10 @@ has min_occurs => (
     builder => '_min_occurs',
     lazy_build => 1,
 );
-has nillble => (
+has nillable => (
     is     => 'rw',
     isa    => 'Bool',
-    builder => '_nillble',
+    builder => '_nillable',
     lazy_build => 1,
 );
 has choice_group => (
@@ -129,9 +129,14 @@ sub _min_occurs {
     return $self->node->getAttribute('minOccurs') || 0;
 }
 
-sub _nillble {
+sub _nillable {
     my ($self) = @_;
-    return $self->node->getAttribute('nillble') || 0;
+    my $nillable = $self->node->getAttribute('nillable');
+
+    return !$nillable          ? 1
+        : $nillable eq 'true'  ? 1
+        : $nillable eq 'false' ? 0
+        :                        die "Unknown value for attribute nillable in ".$self->node->toString;
 }
 
 sub module {
@@ -269,7 +274,7 @@ W3C::SOAP::XSD::Document::Element - XML Schema Element
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Element version 0.0.4.
+This documentation refers to W3C::SOAP::XSD::Document::Element version 0.0.5.
 
 
 =head1 SYNOPSIS

@@ -27,7 +27,7 @@ use W3C::SOAP::XSD::Document::SimpleType;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has imports => (
     is         => 'rw',
@@ -122,13 +122,6 @@ has ns_map => (
     builder    => '_ns_map',
     lazy_build => 1,
 );
-has ns_module_map => (
-    is        => 'rw',
-    isa       => 'HashRef[Str]',
-    #default   => sub {{}},
-    required  => 1,
-    predicate => 'has_ns_module_map',
-);
 
 sub _imports {
     my ($self) = @_;
@@ -138,19 +131,22 @@ sub _imports {
     for my $import (@nodes) {
         next if $import->getAttribute('namespace') && $import->getAttribute('namespace') eq 'http://www.w3.org/2001/XMLSchema';
 
-        my $location = $import->getAttribute('schemaLocation')
-            || $import->getAttribute('namespace');
-        confess "No schemaLocation specified for ".$import->toString
-            if !$location;
+        my $location = $import->getAttribute('schemaLocation');
+        if ($location) {
 
-        if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
-            $location = URI->new_abs($location, $self->location) . '';
+            if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
+                $location = URI->new_abs($location, $self->location)->as_string;
+            }
+
+            push @imports, __PACKAGE__->new(
+                location      => $location,
+                ns_module_map => $self->ns_module_map,
+                module_base   => $self->module_base,
+            );
         }
-
-        push @imports, __PACKAGE__->new(
-            location      => $location,
-            ns_module_map => $self->ns_module_map,
-        );
+        else {
+            warn "Found import but no schemaLocation so no schema imported!\n\t" . $import->toString . "\n\t";
+        }
     }
 
     return \@imports;
@@ -173,19 +169,22 @@ sub _includes {
     for my $include (@nodes) {
         next if $include->getAttribute('namespace') && $include->getAttribute('namespace') eq 'http://www.w3.org/2001/XMLSchema';
 
-        my $location = $include->getAttribute('schemaLocation')
-            || $include->getAttribute('namespace');
-        confess "No schemaLocation specified for ".$include->toString
-            if !$location;
+        my $location = $include->getAttribute('schemaLocation');
+        if ($location) {
 
-        if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
-            $location = URI->new_abs($location, $self->location) . '';
+            if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
+                $location = URI->new_abs($location, $self->location)->as_string;
+            }
+
+            push @includes, __PACKAGE__->new(
+                location      => $location,
+                ns_module_map => $self->ns_module_map,
+                module_base   => $self->module_base,
+            );
         }
-
-        push @includes, __PACKAGE__->new(
-            location      => $location,
-            ns_module_map => $self->ns_module_map,
-        );
+        else {
+            warn "Found include but no schemaLocation so no schema included!\n\t" . $include->toString . "\n\t";
+        }
     }
 
     return \@includes;
@@ -328,20 +327,16 @@ sub _element {
     return \%element;
 }
 
-sub _module {
-    my ($self) = @_;
-    my $ns = URI->new($self->target_namespace);
-    $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
-
-    confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
-    confess "No mapping specified for the namespace ", $ns, "!\n"  if !$self->ns_module_map->{$ns};
-
-    return $self->ns_module_map->{$ns};
-}
-
 sub _ns_name {
     my ($self) = @_;
     my %rev = reverse %{ $self->ns_map };
+    if ( !$rev{$self->target_namespace} ) {
+        delete $self->ns_map->{''};
+        my $ns = $self->target_namespace;
+        $ns =~ s/:/_/g;
+        $rev{$self->target_namespace} = $ns;
+        $self->ns_map->{$ns} = $self->target_namespace;
+    }
     confess "No ns name\n".Dumper \%rev, $self->target_namespace if !$rev{$self->target_namespace};
     return $rev{$self->target_namespace};
 }
@@ -375,8 +370,16 @@ sub get_ns_uri {
 
     return $self->ns_map->{$ns_name} if $self->ns_map->{$ns_name};
 
+    if ( $ns_name =~ /:/ ) {
+        my $tmp_ns_name = $ns_name;
+        $tmp_ns_name =~ s/:/_/g;
+        return $self->ns_map->{$tmp_ns_name} if $self->ns_map->{$tmp_ns_name};
+    }
+
     while ($node) {
         my $ns = $node->getAttribute("xmlns:$ns_name");
+        return $ns if $ns;
+        $ns = $node->getAttribute("targetNamespace");
         return $ns if $ns;
         $node = $node->parentNode;
         last if ref $node eq 'XML::LibXML::Document';
@@ -389,8 +392,11 @@ sub get_ns_uri {
 
 sub get_module_base {
     my ($self, $ns) = @_;
-    $ns = URI->new($ns);
-    $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
+    if ( $ns && $ns =~ /^(?:https?|ftp):/ ) {
+        $ns = URI->new($ns);
+        $ns->host( lc $ns->host ) if $ns->can('host') && $ns->host;
+        $ns = $ns->as_string;
+    }
 
     confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
     confess "No mapping specified for the namespace $ns!\n"        if !$self->ns_module_map->{$ns};
@@ -408,7 +414,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.0.4.
+This documentation refers to W3C::SOAP::XSD::Document version 0.0.5.
 
 =head1 SYNOPSIS
 

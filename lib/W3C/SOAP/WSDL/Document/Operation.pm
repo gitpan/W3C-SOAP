@@ -19,7 +19,7 @@ use W3C::SOAP::WSDL::Document::InOutPuts;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has style => (
     is         => 'rw',
@@ -43,6 +43,12 @@ has outputs => (
     is         => 'rw',
     isa        => 'ArrayRef[W3C::SOAP::WSDL::Document::InOutPuts]',
     builder    => '_outputs',
+    lazy_build => 1,
+);
+has faults => (
+    is         => 'rw',
+    isa        => 'ArrayRef[W3C::SOAP::WSDL::Document::InOutPuts]',
+    builder    => '_faults',
     lazy_build => 1,
 );
 has port_type => (
@@ -70,6 +76,7 @@ sub _action {
 
 sub _inputs  { return $_[0]->_in_out_puts('input');  }
 sub _outputs { return $_[0]->_in_out_puts('output'); }
+sub _faults  { return $_[0]->_in_out_puts('fault');  }
 sub _in_out_puts {
     my ($self, $dir) = @_;
     my @puts;
@@ -77,8 +84,8 @@ sub _in_out_puts {
 
     for my $node (@nodes) {
         push @puts, W3C::SOAP::WSDL::Document::InOutPuts->new(
-            parent_node   => $self,
-            node     => $node,
+            parent_node => $self,
+            node        => $node,
         );
     }
 
@@ -104,7 +111,7 @@ W3C::SOAP::WSDL::Document::Operation - <One-line description of module's purpose
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::Operation version 0.0.4.
+This documentation refers to W3C::SOAP::WSDL::Document::Operation version 0.0.5.
 
 
 =head1 SYNOPSIS

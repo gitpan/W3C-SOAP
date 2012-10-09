@@ -15,11 +15,11 @@ use List::Util;
 #use List::MoreUtils;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
-use W3C::SOAP::Utils qw/split_ns/;
+use W3C::SOAP::Utils qw/split_ns xml_error cmp_ns/;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.0.4');
+our $VERSION     = version->new('0.0.5');
 
 has element => (
     is         => 'rw',
@@ -37,6 +37,7 @@ has type => (
 sub _element {
     my ($self) = @_;
     my ($part) = $self->document->xpc->findnodes("wsdl:part", $self->node);
+    return unless $part;
     my $element = $part->getAttribute('element');
     return unless $element;
 
@@ -48,7 +49,7 @@ sub _element {
         push @schemas, @{ $schema->imports };
         push @schemas, @{ $schema->includes };
 
-        if ( $schema->target_namespace eq $nsuri ) {
+        if ( cmp_ns($schema->target_namespace, $nsuri) ) {
             for my $element (@{ $schema->elements }) {
                 return $element if $element->name eq $el_name;
             }
@@ -61,6 +62,7 @@ sub _element {
 sub _type {
     my ($self) = @_;
     my ($part) = $self->document->xpc->findnodes("wsdl:part", $self->node);
+    return unless $part;
     my $type = $part->getAttribute('type');
     return unless $type;
 
@@ -77,7 +79,7 @@ W3C::SOAP::WSDL::Document::Message - <One-line description of module's purpose>
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::Message version 0.0.4.
+This documentation refers to W3C::SOAP::WSDL::Document::Message version 0.0.5.
 
 
 =head1 SYNOPSIS
