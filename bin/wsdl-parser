@@ -22,7 +22,7 @@ use W3C::SOAP::WSDL::Parser;
 use File::ShareDir qw/dist_dir/;
 use Template;
 
-our $VERSION = version->new('0.0.5');
+our $VERSION = version->new('0.0.6');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
@@ -94,7 +94,16 @@ sub main {
 
     die Dumper \@ARGV if @ARGV % 2;
     my %map = @ARGV;
+
     for my $module (keys %map) {
+
+        # check that %map modules don't overlap with $option{ns_module_map} modules
+        if ($option{ns_module_map}{$module}) {
+            die "The module '$module' is mapped from both the WSDL '$map{$module}'"
+                . " and the XMLSchema '$option{ns_module_map}{$module}' namespaces"
+                . " please use different modules!\n";
+        }
+
         my $wsdl = W3C::SOAP::WSDL::Parser->new(
             location => $map{$module},
             template => $template,
@@ -176,7 +185,7 @@ wsdl-parser - Parses a WSDL file to generate a SOAP client
 
 =head1 VERSION
 
-This documentation refers to wsdl-parser version 0.0.5.
+This documentation refers to wsdl-parser version 0.0.6.
 
 =head1 SYNOPSIS
 

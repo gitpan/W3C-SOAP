@@ -19,8 +19,9 @@ use TryCatch;
 use XML::LibXML;
 use W3C::SOAP::Exception;
 use W3C::SOAP::Header;
+use Moose::Util::TypeConstraints qw/duck_type/;
 
-our $VERSION     = version->new('0.0.5');
+our $VERSION     = version->new('0.0.6');
 our $DEBUG_REQUEST_RESPONSE = $ENV{W3C_SOAP_DEBUG_CLIENT};
 
 has location => (
@@ -38,6 +39,12 @@ has mech => (
     is      => 'rw',
     isa     => 'WWW::Mechanize',
     builder => '_mech',
+);
+has log => (
+    is        => 'rw',
+    isa       => duck_type([qw/ debug info warn error fatal /]),
+    predicate => 'has_log',
+    clearer   => 'clear_log',
 );
 
 sub request {
@@ -90,10 +97,12 @@ sub send {
     my ($self, $action, $xml) = @_;
     my $content;
 
+    $self->log->debug("$action REQUEST\n" . $xml->toString) if $self->has_log;
     try {
         $content = $self->_post($action, $xml);
     }
     catch ($e) {
+        $self->log->error("$action RESPONSE \n" . $self->mech->res->content) if $self->has_log;
         my $xml_error = eval { XML::LibXML->load_xml( string => $self->mech->res->content ) };
 
         if ( $xml_error ) {
@@ -117,6 +126,7 @@ sub send {
             );
         }
     };
+    $self->log->debug("$action RESPONSE \n$content") if $self->has_log;
 
     my $xml_response = XML::LibXML->load_xml( string => $content );
     my $ns = $self->_envelope_ns($xml_response);
@@ -163,8 +173,8 @@ sub _header {
         $mech = WWW::Mechanize->new;
 
         if ($DEBUG_REQUEST_RESPONSE) {
-            $mech->add_handler("request_send",  sub { shift->dump; return });
-            $mech->add_handler("response_done", sub { shift->dump; return });
+            $mech->add_handler("request_send",  sub { shift->dump( prefix => 'REQUEST  ', maxlength => $ENV{W3C_SOAP_DEBUG_LENGTH} || 1024 ); return });
+            $mech->add_handler("response_done", sub { shift->dump( prefix => 'RESPONSE ', maxlength => $ENV{W3C_SOAP_DEBUG_LENGTH} || 1024 ); return });
         }
 
         return $mech;
@@ -181,7 +191,7 @@ W3C::SOAP::Client - Client to talk SOAP to a server.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Client version 0.0.5.
+This documentation refers to W3C::SOAP::Client version 0.0.6.
 
 =head1 SYNOPSIS
 
