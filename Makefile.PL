@@ -32,12 +32,9 @@ WriteMakefile
                  },
   'INSTALLDIRS' => 'site',
   'EXE_FILES' => [
-                   'bin/.xsd-parser.swpx',
                    'bin/get-wsdl-resources',
                    'bin/wsdl-parser',
-                   'bin/wsdl-parser~',
-                   'bin/xsd-parser',
-                   'bin/xsd-parser~'
+                   'bin/xsd-parser'
                  ],
   'PL_FILES' => {}
 )

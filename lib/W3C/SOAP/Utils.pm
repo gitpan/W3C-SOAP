@@ -21,7 +21,7 @@ Moose::Exporter->setup_import_methods(
     with_meta => ['operation'],
 );
 
-our $VERSION     = version->new('0.0.6');
+our $VERSION     = version->new('0.0.7');
 
 sub split_ns {
     my ($tag) = @_;
@@ -86,7 +86,7 @@ W3C::SOAP::Utils - Utility functions to be used with C<W3C::SOAP> modules
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Utils version 0.0.6.
+This documentation refers to W3C::SOAP::Utils version 0.0.7.
 
 =head1 SYNOPSIS
 
@@ -120,7 +120,7 @@ Splits an XML tag's namespace from the tag name
 
 =item C<normalise_ns ($ns)>
 
-Creates a normalised XML name space string (ie lower cases the host part of
+Creates a normalized XML name space string (ie lower cases the host part of
 the name space)
 
 =item C<cmp_ns ($ns1, $ns2)>
