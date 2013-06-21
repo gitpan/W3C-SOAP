@@ -11,7 +11,7 @@ use warnings;
 use version;
 use Carp;
 BEGIN {
-    $MooseX::Types::XMLSchema::AUTHORITY = 'cpan:IVANWILLS';
+    $W3C::SOAP::XSD::Types::AUTHORITY = 'cpan:IVANWILLS';
 }
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
@@ -32,7 +32,7 @@ use DateTime;
 use DateTime::Format::Strptime qw/strptime/;
 use Math::BigFloat;
 
-our $VERSION     = version->new('0.0.7');
+our $VERSION     = version->new('0.01');
 
 my $sig_warn = $SIG{__WARN__};
 $SIG{__WARN__} = sub {};
@@ -171,7 +171,7 @@ W3C::SOAP::XSD::Types - <One-line description of module's purpose>
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Types version 0.0.7.
+This documentation refers to W3C::SOAP::XSD::Types version 0.01.
 
 
 =head1 SYNOPSIS

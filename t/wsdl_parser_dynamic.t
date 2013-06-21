@@ -21,7 +21,7 @@ my $template = Template->new(
     INTERPOLATE  => 0,
     EVAL_PERL    => 1,
 );
-my $mech = MechMock->new;
+my $ua = MechMock->new;
 # create the parser object
 my $parser = W3C::SOAP::WSDL::Parser->new(
     location      => $dir->file('eg.wsdl').'',
@@ -42,16 +42,16 @@ exit;
 sub dynamic_modules {
     note my ($class) = @_;
     my $wsdl = $class->new;
-    $wsdl->mech($mech);
+    $wsdl->ua($ua);
     can_ok $wsdl, 'first_action';
     my $action = $wsdl->meta->get_method('first_action');
     is $action->wsdl_operation, 'firstAction', 'Have an operation';
-    is $action->in_class, 'Dynamic::XSD::urn::eg_schema_org', 'Input class is correct';
+    is $action->in_class, 'Dynamic::XSD::Org::Schema::Eg::v1', 'Input class is correct';
 
-    $mech->content(<<"XML");
+    $ua->content(<<"XML");
 <?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-    <soapenv:Body xmlns:eg="urn:eg.schema.org">
+    <soapenv:Body xmlns:eg="http://eg.schema.org/v1">
         <eg:el2>2</eg:el2>
     </soapenv:Body>
 </soapenv:Envelope>
