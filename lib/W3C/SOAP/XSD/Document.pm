@@ -28,7 +28,7 @@ use W3C::SOAP::Utils qw/normalise_ns/;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.01');
+our $VERSION     = version->new('0.02');
 
 has imports => (
     is         => 'rw',
@@ -135,8 +135,20 @@ sub _imports {
         my $location = $import->getAttribute('schemaLocation');
         if ($location) {
 
-            if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
-                $location = URI->new_abs($location, $self->location)->as_string;
+            if ( $self->location && (
+                    $self->location =~ m{^(?:https?|ftp)://}
+                    || (
+                        -f $self->location
+                        && !-f $location
+                    )
+                )
+            ) {
+                my $current_location
+                    = -f $self->location
+                    ? file($self->location)->absolute . ''
+                    : $self->location;
+
+                $location = URI->new_abs($location, $current_location)->as_string;
             }
 
             push @imports, __PACKAGE__->new(
@@ -410,7 +422,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.01.
+This documentation refers to W3C::SOAP::XSD::Document version 0.02.
 
 =head1 SYNOPSIS
 
