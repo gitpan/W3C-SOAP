@@ -24,11 +24,11 @@ use W3C::SOAP::Exception;
 use W3C::SOAP::XSD::Document::Element;
 use W3C::SOAP::XSD::Document::ComplexType;
 use W3C::SOAP::XSD::Document::SimpleType;
-use W3C::SOAP::Utils qw/normalise_ns/;
+use W3C::SOAP::Utils qw/normalise_ns ns2module/;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.02');
+our $VERSION     = version->new('0.03');
 
 has imports => (
     is         => 'rw',
@@ -403,15 +403,6 @@ sub get_ns_uri {
     return $self->ns_map->{$ns_name};
 }
 
-sub get_module_base {
-    my ($self, $ns) = @_;
-
-    confess "Trying to get module mappings when none specified!\n" if !$self->has_ns_module_map;
-    confess "No mapping specified for the namespace $ns!\n"        if !$self->ns_module_map->{normalise_ns($ns)};
-
-    return $self->ns_module_map->{normalise_ns($ns)};
-}
-
 1;
 
 __END__
@@ -422,7 +413,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.02.
+This documentation refers to W3C::SOAP::XSD::Document version 0.03.
 
 =head1 SYNOPSIS
 
@@ -445,8 +436,6 @@ interface.
 =over 4
 
 =item C<get_ns_uri ()>
-
-=item C<get_module_base ()>
 
 =back
 

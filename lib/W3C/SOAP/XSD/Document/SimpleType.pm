@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.02');
+our $VERSION     = version->new('0.03');
 
 has type => (
     is         => 'rw',
@@ -43,14 +43,14 @@ has pattern => (
 has maxLength => (
     is         => 'rw',
     isa        => 'Maybe[Int]',
-    builder    => '_minLength',
+    builder    => '_maxLength',
     predicate  => 'has_minLength',
     lazy_build => 1,
 );
 has minLength => (
     is         => 'rw',
     isa        => 'Maybe[Int]',
-    builder    => '_maxLength',
+    builder    => '_minLength',
     predicate  => 'has_maxLength',
     lazy_build => 1,
 );
@@ -130,7 +130,7 @@ W3C::SOAP::XSD::Document::SimpleType - <One-line description of module's purpose
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.02.
+This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.03.
 
 
 =head1 SYNOPSIS

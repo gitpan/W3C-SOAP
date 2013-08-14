@@ -28,7 +28,7 @@ Moose::Exporter->setup_import_methods(
 
 extends 'W3C::SOAP::Parser';
 
-our $VERSION     = version->new('0.02');
+our $VERSION     = version->new('0.03');
 
 has '+document' => (
     isa      => 'W3C::SOAP::WSDL::Document',
@@ -64,7 +64,8 @@ sub write_modules {
         $parent = $parent->parent;
     }
     mkdir $_ for reverse @missing;
-    my @modules = $self->get_xsd->write_modules;
+    my $xsd_parser = $self->get_xsd;
+    my @modules = $xsd_parser->write_modules;
 
     confess "No XSD modules found!\n" unless @modules;
 
@@ -79,6 +80,7 @@ sub write_modules {
     confess "Error in creating $file (xsd.pm): ". $template->error."\n"
         if $template->error;
 
+    return ( $file, $xsd_parser->written_modules );
 }
 
 sub get_xsd {
@@ -90,7 +92,7 @@ sub get_xsd {
     if ( $self->has_module_base ) {
         my $base = $self->module_base;
         $base =~ s/WSDL/XSD/;
-        $base .= '::XSD' if ! $base =~ /XSD/;
+        $base .= '::XSD' if $base !~ /XSD/;
         push @args, ( module_base => $base );
     }
 
@@ -120,8 +122,9 @@ sub load_wsdl {
     return $cache{$location} if $cache{$location};
 
     my $parser = __PACKAGE__->new(
-        location => $location,
+        location      => $location,
         ns_module_map => {},
+        module_base   => 'Dynamic::WSDL',
     );
 
     my $class = $parser->dynamic_classes;
@@ -133,7 +136,8 @@ sub dynamic_classes {
     my ($self) = @_;
     my @classes = $self->get_xsd->dynamic_classes;
 
-    my $class_name = "Dynamic::WSDL::" . ns2module($self->document->target_namespace);
+    $self->module_base('Dynamic::WSDL') if !$self->has_module_base;
+    my $class_name = $self->module_base . '::' . ns2module($self->document->target_namespace);
 
     my $wsdl = $self->document;
     my %method;
@@ -195,11 +199,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::WSDL::Parser - Module to create Moose objects from a WSDL
+W3C::SOAP::WSDL::Parser - Module to create Moose objects from a WSDL file
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Parser version 0.02.
+This documentation refers to W3C::SOAP::WSDL::Parser version 0.03.
 
 =head1 SYNOPSIS
 
@@ -234,6 +238,32 @@ This documentation refers to W3C::SOAP::WSDL::Parser version 0.02.
 
 This module parses a WSDL file so that it can produce a client to talk to the
 SOAP service.
+
+There are two ways of using this file:
+
+=over 4
+
+=item 1
+
+Dynamic : C<load_wsdl(...)> or C<W3C::SOAP::WSDL->new()->dynamic_classes>
+
+These return an in memory generated WSDL client which you can use to talk
+to the specified web service.
+
+=item 2
+
+Static : C<W3C::SOAP::WSDL->new()->write_modules()>
+
+This writes perl modules to disk so that you can C<use> the modules in your
+later. This has the advantage that you don't have to recompile the WSDL
+every time you run your code but it has the disadvantage that your client
+may be out of date compared to the web service's WSDL.
+
+=back
+
+Both interfaces are identical once you have the client object. If you want
+to change at a later point the code change should be adding or removing a
+use statement and switching from a C<<Module->new>> to C<load_wsdl()>.
 
 =head1 SUBROUTINES/METHODS
 
