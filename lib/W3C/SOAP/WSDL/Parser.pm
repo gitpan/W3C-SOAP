@@ -28,7 +28,7 @@ Moose::Exporter->setup_import_methods(
 
 extends 'W3C::SOAP::Parser';
 
-our $VERSION     = version->new('0.03');
+our $VERSION     = version->new('0.04');
 
 has '+document' => (
     isa      => 'W3C::SOAP::WSDL::Document',
@@ -199,11 +199,12 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::WSDL::Parser - Module to create Moose objects from a WSDL file
+W3C::SOAP::WSDL::Parser - Parses WSDL documents to generate Perl client
+libraries to access the Web Service defined.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Parser version 0.03.
+This documentation refers to W3C::SOAP::WSDL::Parser version 0.04.
 
 =head1 SYNOPSIS
 
@@ -245,14 +246,15 @@ There are two ways of using this file:
 
 =item 1
 
-Dynamic : C<load_wsdl(...)> or C<W3C::SOAP::WSDL->new()->dynamic_classes>
+Dynamic : C<<load_wsdl(...)> or C<W3C::SOAP::WSDL->new()->dynamic_classes>>
 
 These return an in memory generated WSDL client which you can use to talk
 to the specified web service.
 
 =item 2
 
-Static : C<W3C::SOAP::WSDL->new()->write_modules()>
+Static : C<<W3C::SOAP::WSDL->new()->write_modules()>> or use L<wsdl-parser>
+command line script.
 
 This writes perl modules to disk so that you can C<use> the modules in your
 later. This has the advantage that you don't have to recompile the WSDL

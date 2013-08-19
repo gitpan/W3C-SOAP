@@ -28,7 +28,7 @@ use W3C::SOAP::Utils qw/normalise_ns ns2module/;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.03');
+our $VERSION     = version->new('0.04');
 
 has imports => (
     is         => 'rw',
@@ -136,7 +136,7 @@ sub _imports {
         if ($location) {
 
             if ( $self->location && (
-                    $self->location =~ m{^(?:https?|ftp)://}
+                    $self->location =~ m{^(?:https?|ftp)://}xms
                     || (
                         -f $self->location
                         && !-f $location
@@ -185,7 +185,7 @@ sub _includes {
         my $location = $include->getAttribute('schemaLocation');
         if ($location) {
 
-            if ( $self->location && $self->location =~ m{^(?:https?|ftp)://} ) {
+            if ( $self->location && $self->location =~ m{^(?:https?|ftp)://}xms ) {
                 $location = URI->new_abs($location, $self->location)->as_string;
             }
 
@@ -346,7 +346,7 @@ sub _ns_name {
     if ( !$rev{$self->target_namespace} ) {
         delete $self->ns_map->{''};
         my $ns = $self->target_namespace;
-        $ns =~ s/:/_/g;
+        $ns =~ s/:/_/gxms;
         $rev{$self->target_namespace} = $ns;
         $self->ns_map->{$ns} = $self->target_namespace;
     }
@@ -358,8 +358,12 @@ sub _ns_map {
     my ($self) = @_;
 
     my %map
-        = map {$_->name =~ /^xmlns:?(.*)$/; ($1 => $_->value)}
-        grep { $_->name =~ /^xmlns/ }
+        = map {
+            ( $_->name =~ /^xmlns:?(.*)$/xms => $_->value )
+        }
+        grep {
+            $_->name =~ /^xmlns/xms
+        }
         $self->xml->getDocumentElement->getAttributes;
 
     my %rev;
@@ -371,7 +375,7 @@ sub _ns_map {
     }
 
     my $ns = $self->target_namespace;
-    $ns =~ s/:/_/g;
+    $ns =~ s/:/_/gxms;
     $map{$ns} = $self->target_namespace if !$rev{$self->target_namespace};
 
     return \%map;
@@ -383,9 +387,9 @@ sub get_ns_uri {
 
     return $self->ns_map->{$ns_name} if $self->ns_map->{$ns_name};
 
-    if ( $ns_name =~ /:/ ) {
+    if ( $ns_name =~ /:/xms ) {
         my $tmp_ns_name = $ns_name;
-        $tmp_ns_name =~ s/:/_/g;
+        $tmp_ns_name =~ s/:/_/gxms;
         return $self->ns_map->{$tmp_ns_name} if $self->ns_map->{$tmp_ns_name};
     }
 
@@ -413,7 +417,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.03.
+This documentation refers to W3C::SOAP::XSD::Document version 0.04.
 
 =head1 SYNOPSIS
 

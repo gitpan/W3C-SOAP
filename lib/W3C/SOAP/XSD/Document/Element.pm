@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns xml_error/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.03');
+our $VERSION     = version->new('0.04');
 
 has complex_type => (
     is     => 'rw',
@@ -90,7 +90,7 @@ sub _type {
 
             my $child = $children[0]->firstChild;
             while ($child) {
-                last TYPE if $child->nodeName !~ /^#/;
+                last TYPE if $child->nodeName !~ /^[#]/xms;
                 $child = $child->nextSibling;
             }
 
@@ -274,7 +274,7 @@ W3C::SOAP::XSD::Document::Element - XML Schema Element
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Element version 0.03.
+This documentation refers to W3C::SOAP::XSD::Document::Element version 0.04.
 
 
 =head1 SYNOPSIS

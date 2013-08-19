@@ -23,7 +23,7 @@ use W3C::SOAP::Utils qw/split_ns/;
 use TryCatch;
 use DateTime::Format::Strptime qw/strptime/;
 
-our $VERSION     = version->new('0.03');
+our $VERSION     = version->new('0.04');
 
 has xsd_ns => (
     is  => 'rw',
@@ -43,10 +43,10 @@ has xsd_ns_name => (
     my $require = sub {
         my ($module) = @_;
         return if $required{$module}++;
-        return if UNIVERSAL::can($module, 'new');
+        return if eval{ $module->can('new') };
 
         my $file = "$module.pm";
-        $file =~ s{::}{/}g;
+        $file =~ s{::}{/}gxms;
         require $file;
     };
     around BUILDARGS => sub {
@@ -60,11 +60,11 @@ has xsd_ns_name => (
             my $xml   = $args;
             my $child = $xml->firstChild;
             my $map   = $class->xml2perl_map;
-            my ($element)  = $class =~ /::([^:]+)$/;
+            my ($element)  = $class =~ /::([^:]+)$/xms;
             $args = {};
 
             while ($child) {
-                if ( $child->nodeName !~ /^#/ ) {
+                if ( $child->nodeName !~ /^[#]/xms ) {
                     my ($node_ns, $node) = split_ns($child->nodeName);
                     confess "Could not get node from (".$child->nodeName." via '$node_ns', '$node')\n"
                         if !$map->{$node};
@@ -91,7 +91,11 @@ my %ns_map;
 my $count = 0;
 sub _xsd_ns_name {
     my ($self) = @_;
-    my $ns = $self->xsd_ns;
+    return $self->get_xsd_ns_name($self->xsd_ns);
+}
+
+sub get_xsd_ns_name {
+    my ($self, $ns) = @_;
 
     return $ns_map{$ns} if $ns_map{$ns};
 
@@ -108,7 +112,7 @@ sub _from_xml {
         return $type->new($xml);
     }
     catch ($e) {
-        $e =~ s/ at .*//ms;
+        $e =~ s/\s at \s .*//xms;
         warn "$class Failed in building from $type\->new($xml) : $e\n",
             "Will use :\n\t'",
             $xml->toString,
@@ -117,6 +121,7 @@ sub _from_xml {
             '*' x 222,
             "\n";
     }
+
     return $xml->textContent;
 }
 
@@ -176,15 +181,17 @@ sub to_xml {
         next if !$self->$has;
 
         my $xml_name = $att->has_xs_name ? $att->xs_name : $name;
+        my $xml_ns   = $att->has_xs_ns   ? $att->xs_ns   : $self->xsd_ns;
+        my $xml_ns_name = $xml_ns ? $self->get_xsd_ns_name($xml_ns) : $xsd_ns_name;
 
         my $value = ref $self->$name eq 'ARRAY' ? $self->$name : [$self->$name];
 
         for my $item (@$value) {
-            my $tag = $xml->createElement($xsd_ns_name ? $xsd_ns_name . ':' . $xml_name : $xml_name);
-            $tag->setAttribute("xmlns:$xsd_ns_name" => $self->xsd_ns) if $self->xsd_ns;
+            my $tag = $xml->createElement($xml_ns_name ? $xml_ns_name . ':' . $xml_name : $xml_name);
+            $tag->setAttribute("xmlns:$xml_ns_name" => $xml_ns) if $xml_ns;
 
             if ( blessed($item) && $item->can('to_xml') ) {
-                $item->xsd_ns_name( $xsd_ns_name ) if !$item->has_xsd_ns_name;
+                #$item->xsd_ns_name( $xsd_ns_name ) if !$item->has_xsd_ns_name;
                 my @children = $item->to_xml($xml);
                 $tag->appendChild($_) for @children;
             }
@@ -266,7 +273,7 @@ sub get_xml_nodes {
     my @parent_nodes;
     my @supers = $meta->superclasses;
     for my $super (@supers) {
-        push @parent_nodes, $super->get_xml_nodes if $super ne __PACKAGE__ && UNIVERSAL::can($super, 'get_xml_nodes');
+        push @parent_nodes, $super->get_xml_nodes if $super ne __PACKAGE__ && eval { $super->can('get_xml_nodes') };
     }
 
     return @parent_nodes, map {
@@ -296,7 +303,7 @@ sub xsd_subtype {
         :                                 $parent_type;
 
     my $parent_type_name = $args{list} ? "ArrayRef[$parent_type]" : $parent_type;
-    my $subtype = $parent_type =~ /^xsd:\w/ && Moose::Util::TypeConstraints::find_type_constraint($parent_type_name);
+    my $subtype = $parent_type =~ /^xsd:\w/xms && Moose::Util::TypeConstraints::find_type_constraint($parent_type_name);
     return $subtype if $subtype;
 
     $subtype = subtype
@@ -358,11 +365,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::XSD - The parent module to XSD modules
+W3C::SOAP::XSD - The parent module for generated XSD modules.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD version 0.03.
+This documentation refers to W3C::SOAP::XSD version 0.04.
 
 =head1 SYNOPSIS
 
@@ -379,6 +386,10 @@ This documentation refers to W3C::SOAP::XSD version 0.03.
 =head1 SUBROUTINES/METHODS
 
 =over 4
+
+=item C<get_xsd_ns_name ($ns)>
+
+Returns the namespace name for a particular namespace.
 
 =item C<xml2perl_map ()>
 
