@@ -28,7 +28,7 @@ Moose::Exporter->setup_import_methods(
 
 extends 'W3C::SOAP::Parser';
 
-our $VERSION     = version->new('0.04');
+our $VERSION     = version->new('0.05');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -133,8 +133,9 @@ sub write_modules {
         $self->write_module(
             'xsd/pm.tt',
             {
-                xsd => $xsd,
-                parents => \@parents,
+                xsd         => $xsd,
+                parents     => \@parents,
+                w3c_version => $VERSION,
             },
             "$file.pm"
         );
@@ -434,7 +435,7 @@ implementing the object defined.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.04.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.05.
 
 =head1 SYNOPSIS
 
@@ -476,7 +477,7 @@ Gets a list of the schemas imported/included from the base XML Schema(s)
 
 Creates the complex types
 
-=item C<$wsdl->dynamic_classes ()>
+=item C<<$wsdl->dynamic_classes ()>>
 
 Creates a dynamic XSD objects that represent the XML Schema files imported.
 
