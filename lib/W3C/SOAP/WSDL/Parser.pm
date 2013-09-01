@@ -28,7 +28,7 @@ Moose::Exporter->setup_import_methods(
 
 extends 'W3C::SOAP::Parser';
 
-our $VERSION     = version->new('0.05');
+our $VERSION     = version->new('0.06');
 
 has '+document' => (
     isa      => 'W3C::SOAP::WSDL::Document',
@@ -44,6 +44,12 @@ has '+document' => (
 has location => (
     is  => 'rw',
     isa => 'Str',
+);
+has xsd_parser => (
+    is      => 'rw',
+    isa     => 'W3C::SOAP::XSD::Parser',
+    builder => '_xsd_parser',
+    lazy    => 1,
 );
 
 sub write_modules {
@@ -84,7 +90,7 @@ sub write_modules {
     return ( $file, $xsd_parser->written_modules );
 }
 
-sub get_xsd {
+sub _xsd_parser {
     my ($self) = @_;
 
     my @args;
@@ -102,6 +108,13 @@ sub get_xsd {
         ns_module_map => $self->ns_module_map,
         @args,
     );
+
+    return $parse;
+}
+
+sub get_xsd {
+    my ($self) = @_;
+    my $parse = $self->xsd_parser;
 
     for my $xsd (@{ $self->document->schemas }) {
         $xsd->ns_module_map($self->ns_module_map);
@@ -205,7 +218,7 @@ libraries to access the Web Service defined.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Parser version 0.05.
+This documentation refers to W3C::SOAP::WSDL::Parser version 0.06.
 
 =head1 SYNOPSIS
 

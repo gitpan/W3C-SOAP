@@ -25,7 +25,7 @@ use DateTime::Format::Strptime qw/strptime/;
 
 extends 'W3C::SOAP::Base';
 
-our $VERSION     = version->new('0.05');
+our $VERSION     = version->new('0.06');
 
 has xsd_ns => (
     is  => 'rw',
@@ -164,6 +164,7 @@ sub _get_attribute_default {
 
 sub to_xml {
     my ($self, $xml) = @_;
+    confess "No XML document passed to attach nodes to!" if !$xml;
     my $child;
     my $meta = $self->meta;
     my @attributes = $self->get_xml_nodes;
@@ -184,7 +185,10 @@ sub to_xml {
 
         my $xml_name = $att->has_xs_name ? $att->xs_name : $name;
         my $xml_ns   = $att->has_xs_ns   ? $att->xs_ns   : $self->xsd_ns;
-        my $xml_ns_name = $xml_ns ? $self->get_xsd_ns_name($xml_ns) : $xsd_ns_name;
+        my $xml_ns_name
+            = !defined $xml_ns ? $xsd_ns_name
+            : $xml_ns          ? $self->get_xsd_ns_name($xml_ns)
+            :                    '';
 
         my $value = ref $self->$name eq 'ARRAY' ? $self->$name : [$self->$name];
 
@@ -371,7 +375,7 @@ W3C::SOAP::XSD - The parent module for generated XSD modules.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD version 0.05.
+This documentation refers to W3C::SOAP::XSD version 0.06.
 
 =head1 SYNOPSIS
 
