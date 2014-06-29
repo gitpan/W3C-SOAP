@@ -25,7 +25,7 @@ use DateTime::Format::Strptime qw/strptime/;
 
 extends 'W3C::SOAP::Base';
 
-our $VERSION     = version->new('0.06');
+our $VERSION     = version->new('0.07');
 
 has xsd_ns => (
     is  => 'rw',
@@ -144,22 +144,6 @@ sub xml2perl_map {
     }
 
     return \%map;
-}
-
-# recursively try to find the default value for an attribute
-sub _get_attribute_default {
-    my ($class, $attribute) = @_;
-    my $meta = $class->meta;
-    my $attrib = $meta->get_attribute($attribute);
-
-    return $attrib->default if $attrib;
-
-    for my $super ( $meta->superclasses ) {
-        my $default = $super->_get_attribute_default($attribute);
-        return $default if $default;
-    }
-
-    return;
 }
 
 sub to_xml {
@@ -375,7 +359,7 @@ W3C::SOAP::XSD - The parent module for generated XSD modules.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD version 0.06.
+This documentation refers to W3C::SOAP::XSD version 0.07.
 
 =head1 SYNOPSIS
 
