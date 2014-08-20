@@ -18,7 +18,7 @@ use English qw/ -no_match_vars /;
 use Path::Class;
 use XML::LibXML;
 use WWW::Mechanize;
-use TryCatch;
+use Try::Tiny;
 use URI;
 use W3C::SOAP::Exception;
 use W3C::SOAP::XSD::Document::Element;
@@ -28,7 +28,7 @@ use W3C::SOAP::Utils qw/normalise_ns ns2module/;
 
 extends 'W3C::SOAP::Document';
 
-our $VERSION     = version->new('0.07');
+our $VERSION     = version->new('0.08');
 
 has element_form_default => (
     is         => 'rw',
@@ -250,13 +250,13 @@ sub _complex_types {
                 node     => $node,
             );
         }
-        catch ($e) {
+        catch {
             warn Dumper {
                 document => $self,
                 node     => $node,
             };
-            die $e;
-        }
+            die $_;
+        };
 
     }
 
@@ -279,14 +279,14 @@ sub _complex_types {
             );
             push @elements, @{ $complex_types[-1]->sequence };
         }
-        catch ($e) {
+        catch  {
             warn Dumper {
                 parent_node => $element->node->toString,
                 document    => $self,
                 node        => $node,
             };
-            die $e;
-        }
+            die $_;
+        };
     }
 
     # Moved the typification of the names in here from
@@ -344,14 +344,13 @@ sub _element {
 sub _ns_name {
     my ($self) = @_;
     my %rev = reverse %{ $self->ns_map };
-    if ( !$rev{$self->target_namespace} ) {
+    if ( !defined $rev{$self->target_namespace} ) {
         delete $self->ns_map->{''};
         my $ns = $self->target_namespace;
         $ns =~ s/:/_/gxms;
         $rev{$self->target_namespace} = $ns;
         $self->ns_map->{$ns} = $self->target_namespace;
     }
-    confess "No ns name\n".Dumper \%rev, $self->target_namespace if !$rev{$self->target_namespace};
     return $rev{$self->target_namespace};
 }
 
@@ -369,7 +368,7 @@ sub _ns_map {
 
     my %rev;
     for my $name ( keys %map ) {
-        $rev{$map{$name}} ||= $name;
+        $rev{$map{$name}} //= $name;
     }
     if ( $rev{$self->target_namespace} && $map{''} && $map{''} eq $self->target_namespace ) {
         delete $map{''};
@@ -378,6 +377,7 @@ sub _ns_map {
     my $ns = $self->target_namespace;
     $ns =~ s/:/_/gxms;
     $map{$ns} = $self->target_namespace if !$rev{$self->target_namespace};
+    $map{''} = '';
 
     return \%map;
 }
@@ -403,7 +403,7 @@ sub get_ns_uri {
         last if ref $node eq 'XML::LibXML::Document';
     }
 
-    confess "Couldn't find the namespace '$ns_name' to map\nMap has:\n", Dumper $self->ns_map if !$self->ns_map->{$ns_name};
+    confess "Couldn't find the namespace '$ns_name' to map\nMap has:\n", Dumper $self->ns_map if !defined $self->ns_map->{$ns_name};
 
     return $self->ns_map->{$ns_name};
 }
@@ -418,7 +418,7 @@ W3C::SOAP::XSD::Document - Represents a XMLSchema Document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document version 0.07.
+This documentation refers to W3C::SOAP::XSD::Document version 0.08.
 
 =head1 SYNOPSIS
 

@@ -28,7 +28,7 @@ Moose::Exporter->setup_import_methods(
 
 extends 'W3C::SOAP::Parser';
 
-our $VERSION     = version->new('0.07');
+our $VERSION     = version->new('0.08');
 
 subtype xsd_documents =>
     as 'ArrayRef[W3C::SOAP::XSD::Document]';
@@ -398,7 +398,8 @@ sub element_attributes {
         is            => 'rw',
         isa           => $class_name->xsd_subtype(
             ($simple ? 'parent' : 'module') => $type_name,
-           list => $is_array,
+           list     => $is_array,
+           nillable => $element->nillable,
         ),
         predicate     => 'has_'. $element->perl_name,
         # TODO handle nillable correctly  should be a Maybe type
@@ -436,7 +437,7 @@ implementing the object defined.
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Parser version 0.07.
+This documentation refers to W3C::SOAP::XSD::Parser version 0.08.
 
 =head1 SYNOPSIS
 

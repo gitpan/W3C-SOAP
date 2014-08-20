@@ -15,7 +15,7 @@ use List::Util;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 
-our $VERSION    = version->new('0.07');
+our $VERSION    = version->new('0.08');
 $ENV{W3C_SOAP_NAME_STYLE} ||= 'perl';
 
 has node => (
@@ -48,6 +48,21 @@ has name => (
     lazy       => 1,
 );
 
+has perl_name  => (
+    is         => 'rw',
+    isa        => 'Maybe[Str]',
+    predicate  => 'has_perl_name',
+    builder    => '_perl_name',
+    lazy       => 1,
+);
+
+has perl_names => (
+    is   => 'ro',
+    isa  => 'HashRef',
+    lazy => 1,
+    default => sub { return {} },
+);
+
 around BUILDARGS => sub {
     my ($orig, $class, @args) = @_;
     my $args
@@ -69,18 +84,35 @@ sub _document {
 
 sub _name {
     my ($self) = shift;
-    return $self->node->getAttribute('name');
+    my $name = $self->node->getAttribute('name');
+    $name =~ s/\W/_/gxms if $name;
+    return $name;
 }
 
-sub perl_name {
+sub _perl_name
+{
     my ($self) = @_;
     my $name = $self->name;
-    return if !$name;
 
-    return $name if $ENV{W3C_SOAP_NAME_STYLE} eq 'original';
+    if ( $name && ( $ENV{W3C_SOAP_NAME_STYLE} ne 'original' ) ) {
 
-    $name =~ s/ (?<= [^A-Z_] ) ([A-Z]) /_$1/gxms;
-    return lc $name;
+        $name =~ s/ (?<= [^A-Z_] ) ([A-Z]) /_$1/gxms;
+
+        # the allowed characters in XML identifiers are not the same
+        # as those in Perl
+        $name =~ s/\W//g;
+        $name = lc $name;
+
+        # horrid hack to dedupe elements Foo_Bar and Foo.Bar
+        # which are obviously stupid but allowed
+        if ( defined( my $parent = $self->parent_node() ) ) {
+            if ( exists $parent->perl_names()->{$name} ) {
+                $name .= '_' . $parent->perl_names()->{$name};
+            }
+            $parent->perl_names()->{$name}++;
+        }
+    }
+    return $name;
 }
 
 1;
@@ -93,7 +125,7 @@ W3C::SOAP::Document::Node - The super class for document nodes
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::Document::Node version 0.07.
+This documentation refers to W3C::SOAP::Document::Node version 0.08.
 
 =head1 SYNOPSIS
 
