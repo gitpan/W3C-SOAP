@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns xml_error/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.09');
+our $VERSION     = version->new('0.10');
 
 has complex_type => (
     is     => 'rw',
@@ -38,25 +38,25 @@ has package => (
     is     => 'rw',
     isa    => 'Str',
     builder => '_package',
-    lazy_build => 1,
+    lazy    => 1,
 );
 has max_occurs => (
     is     => 'rw',
     #isa    => 'Str',
     builder => '_max_occurs',
-    lazy_build => 1,
+    lazy    => 1,
 );
 has min_occurs => (
     is     => 'rw',
     #isa    => 'Str',
     builder => '_min_occurs',
-    lazy_build => 1,
+    lazy    => 1,
 );
 has nillable => (
     is     => 'rw',
     isa    => 'Bool',
     builder => '_nillable',
-    lazy_build => 1,
+    lazy    => 1,
 );
 has choice_group => (
     is     => 'rw',
@@ -274,7 +274,7 @@ W3C::SOAP::XSD::Document::Element - XML Schema Element
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::Element version 0.09.
+This documentation refers to W3C::SOAP::XSD::Document::Element version 0.10.
 
 
 =head1 SYNOPSIS

@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.09');
+our $VERSION     = version->new('0.10');
 
 has type => (
     is         => 'rw',
@@ -66,6 +66,7 @@ sub _type {
     my ($self) = @_;
     my ($restriction) = $self->document->xpc->findnodes('xsd:restriction', $self->node);
 
+    return '' if !$restriction;
     return $restriction->getAttribute('base');
 }
 
@@ -126,11 +127,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::XSD::Document::SimpleType - <One-line description of module's purpose>
+W3C::SOAP::XSD::Document::SimpleType - Represents simpleType elements of XSD documents
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.09.
+This documentation refers to W3C::SOAP::XSD::Document::SimpleType version 0.10.
 
 
 =head1 SYNOPSIS

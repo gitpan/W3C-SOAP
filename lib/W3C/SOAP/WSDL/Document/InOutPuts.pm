@@ -18,7 +18,7 @@ use English qw/ -no_match_vars /;
 use W3C::SOAP::Utils qw/split_ns/;
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.09');
+our $VERSION     = version->new('0.10');
 
 has message => (
     is         => 'rw',
@@ -94,11 +94,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::WSDL::Document::InOutPuts - <One-line description of module's purpose>
+W3C::SOAP::WSDL::Document::InOutPuts - Representation of input and output element in a WSDL document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::InOutPuts version 0.09.
+This documentation refers to W3C::SOAP::WSDL::Document::InOutPuts version 0.10.
 
 
 =head1 SYNOPSIS
@@ -112,10 +112,8 @@ This documentation refers to W3C::SOAP::WSDL::Document::InOutPuts version 0.09.
 
 =head1 DESCRIPTION
 
-A full description of the module and its features.
-
-May include numerous subsections (i.e., =head2, =head3, etc.).
-
+A C<W3C::SOAP::WSDL::Document::InOutPuts> represents the input and output
+tags in a WSDL document
 
 =head1 SUBROUTINES/METHODS
 

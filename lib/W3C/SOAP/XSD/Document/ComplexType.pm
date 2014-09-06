@@ -19,25 +19,25 @@ use W3C::SOAP::Utils qw/split_ns/;
 
 extends 'W3C::SOAP::XSD::Document::Type';
 
-our $VERSION     = version->new('0.09');
+our $VERSION     = version->new('0.10');
 
 has sequence => (
     is      => 'rw',
     isa     => 'ArrayRef[W3C::SOAP::XSD::Document::Element]',
     builder => '_sequence',
-    lazy_build => 1,
+    lazy    => 1,
 );
 has module => (
     is        => 'rw',
     isa       => 'Str',
     builder   => '_module',
-    lazy_build => 1,
+    lazy       => 1,
 );
 has complex_content => (
     is        => 'rw',
     isa       => 'Str',
     builder   => '_complex_content',
-    lazy_build => 1,
+    lazy       => 1,
 );
 has extension => (
     is        => 'rw',
@@ -124,11 +124,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::XSD::Document::ComplexType - <One-line description of module's purpose>
+W3C::SOAP::XSD::Document::ComplexType - Represents complexType elements of XSD documents
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::XSD::Document::ComplexType version 0.09.
+This documentation refers to W3C::SOAP::XSD::Document::ComplexType version 0.10.
 
 
 =head1 SYNOPSIS

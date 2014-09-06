@@ -19,7 +19,7 @@ use W3C::SOAP::Utils qw/split_ns xml_error cmp_ns/;
 
 extends 'W3C::SOAP::Document::Node';
 
-our $VERSION     = version->new('0.09');
+our $VERSION     = version->new('0.10');
 
 has element => (
     is         => 'rw',
@@ -31,7 +31,7 @@ has type => (
     is         => 'rw',
     isa        => 'Maybe[Str]',
     builder    => '_type',
-    lazy_build => 1,
+    lazy       => 1,
 );
 
 sub _element {
@@ -75,11 +75,11 @@ __END__
 
 =head1 NAME
 
-W3C::SOAP::WSDL::Document::Message - <One-line description of module's purpose>
+W3C::SOAP::WSDL::Document::Message - Representation of SOAP messages in a WSDL document
 
 =head1 VERSION
 
-This documentation refers to W3C::SOAP::WSDL::Document::Message version 0.09.
+This documentation refers to W3C::SOAP::WSDL::Document::Message version 0.10.
 
 
 =head1 SYNOPSIS
@@ -93,10 +93,8 @@ This documentation refers to W3C::SOAP::WSDL::Document::Message version 0.09.
 
 =head1 DESCRIPTION
 
-A full description of the module and its features.
-
-May include numerous subsections (i.e., =head2, =head3, etc.).
-
+A C<W3C::SOAP::WSDL::Document::Message> object represents the messages tags
+in a WSDL document.
 
 =head1 SUBROUTINES/METHODS
 
